@@ -234,16 +234,15 @@ Total: $O(n + k)$, por lo tanto el certificado es verificable en tiempo polinomi
 Para comprender mejor la dureza del problema, presentamos la cadena de reducciones desde problemas fundamentales:
 
 \begin{center}
-\begin{tikzpicture}[node distance=2.5cm]
-\node (partition) [draw, rectangle] {PARTITION};
-\node (3partition) [draw, rectangle, below of=partition] {3-PARTITION};
-\node (binpacking) [draw, rectangle, below of=3partition] {BIN PACKING};
-\node (ourproblem) [draw, rectangle, below of=binpacking] {BALANCED-BIN-PACKING};
+\textbf{Cadena de Reducciones Polinomiales:}
 
-\draw[->] (partition) -- (3partition) node[midway, right] {$\leq_p$};
-\draw[->] (3partition) -- (binpacking) node[midway, right] {$\leq_p$};
-\draw[->] (binpacking) -- (ourproblem) node[midway, right] {$\leq_p$};
-\end{tikzpicture}
+\vspace{0.5cm}
+
+PARTITION $\leq_p$ 3-PARTITION $\leq_p$ BIN PACKING $\leq_p$ BALANCED-BIN-PACKING
+
+\vspace{0.5cm}
+
+\textit{(Cada flecha representa una reducción en tiempo polinomial)}
 \end{center}
 
 \subsubsection{Problema PARTITION (Punto de Partida)}

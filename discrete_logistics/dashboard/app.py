@@ -41,11 +41,11 @@ from discrete_logistics.dashboard.components import (
     ExportManager
 )
 
-from core.problem import Problem, Solution, Item, Bin
-from core.instance_generator import InstanceGenerator
-from algorithms import AlgorithmRegistry
-from algorithms.greedy import FirstFitDecreasing, BestFitDecreasing, WorstFitDecreasing, LPTBalanced
-from algorithms.metaheuristics import SimulatedAnnealing, GeneticAlgorithm, TabuSearch
+from discrete_logistics.core.problem import Problem, Solution, Item, Bin
+from discrete_logistics.core.instance_generator import InstanceGenerator
+from discrete_logistics.algorithms import AlgorithmRegistry
+from discrete_logistics.algorithms.greedy import FirstFitDecreasing, BestFitDecreasing, WorstFitDecreasing, RoundRobinGreedy
+from discrete_logistics.algorithms.metaheuristics import SimulatedAnnealing, GeneticAlgorithm, TabuSearch
 
 
 def init_session_state():
@@ -278,7 +278,7 @@ def create_algorithm_instance(algo_name: str, params: Dict[str, Any]):
         'FirstFitDecreasing': FirstFitDecreasing,
         'BestFitDecreasing': BestFitDecreasing,
         'WorstFitDecreasing': WorstFitDecreasing,
-        'LPTBalanced': LPTBalanced,
+        'RoundRobinGreedy': RoundRobinGreedy,
         'SimulatedAnnealing': lambda: SimulatedAnnealing(**params),
         'GeneticAlgorithm': lambda: GeneticAlgorithm(**params),
         'TabuSearch': lambda: TabuSearch(**params),

@@ -379,11 +379,18 @@ class AlgorithmSelector:
             'description': 'Assigns items to bins with maximum remaining capacity for balance.',
             'params': {}
         },
-        'LPTBalanced': {
-            'name': 'LPT Balanced',
+        'RoundRobinGreedy': {
+            'name': 'Round Robin Greedy',
             'category': 'Greedy',
             'complexity': 'O(n log n)',
-            'description': 'Longest Processing Time algorithm adapted for balanced packing.',
+            'description': 'Distributes items evenly across bins in round-robin fashion.',
+            'params': {}
+        },
+        'LargestDifferenceFirst': {
+            'name': 'Largest Difference First',
+            'category': 'Greedy',
+            'complexity': 'O(n log n)',
+            'description': 'Prioritizes reducing the largest value difference between bins.',
             'params': {}
         },
         'SimulatedAnnealing': {
@@ -455,10 +462,17 @@ class AlgorithmSelector:
         # Algorithm selection
         available_algorithms = self._filter_algorithms(selected_category)
         
+        # Determine default selection based on available algorithms
+        default_selection = []
+        if 'FirstFitDecreasing' in available_algorithms:
+            default_selection.append('FirstFitDecreasing')
+        elif available_algorithms:
+            default_selection.append(list(available_algorithms.keys())[0])
+        
         selected_algorithms = st.multiselect(
             "Select Algorithms to Run",
             options=list(available_algorithms.keys()),
-            default=['FirstFitDecreasing', 'SimulatedAnnealing'],
+            default=default_selection if default_selection else None,
             format_func=lambda x: f"{available_algorithms[x]['name']} ({available_algorithms[x]['category']})"
         )
         

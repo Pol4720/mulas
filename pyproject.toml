@@ -1,0 +1,145 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "discrete-logistics"
+version = "0.1.0"
+description = "Balanced Multi-Bin Packing with Capacity Constraints - A comprehensive optimization toolkit"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Proyecto DAA", email = "daa@example.com"}
+]
+keywords = [
+    "optimization",
+    "bin-packing",
+    "algorithms",
+    "metaheuristics",
+    "operations-research",
+    "combinatorial-optimization"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+    "plotly>=5.18.0",
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "pandas>=2.1.0",
+    "tqdm>=4.66.0",
+    "click>=8.1.0",
+]
+
+[project.optional-dependencies]
+dashboard = [
+    "streamlit>=1.29.0",
+    "dash>=2.14.0",
+]
+animation = [
+    "manim>=0.18.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.12.0",
+    "isort>=5.13.0",
+    "mypy>=1.7.0",
+    "flake8>=6.1.0",
+]
+docs = [
+    "sphinx>=7.2.0",
+    "sphinx-rtd-theme>=2.0.0",
+]
+jupyter = [
+    "jupyter>=1.0.0",
+    "ipykernel>=6.27.0",
+    "ipywidgets>=8.1.0",
+]
+all = [
+    "discrete-logistics[dashboard,dev,docs,jupyter]",
+]
+
+[project.urls]
+Homepage = "https://github.com/Pol4720/mulas"
+Repository = "https://github.com/Pol4720/mulas"
+Documentation = "https://github.com/Pol4720/mulas#readme"
+
+[project.scripts]
+discrete-logistics = "discrete_logistics.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["discrete_logistics*"]
+
+[tool.setuptools.package-data]
+discrete_logistics = ["py.typed"]
+
+[tool.black]
+line-length = 120
+target-version = ['py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip_gitignore = true
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["discrete_logistics"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

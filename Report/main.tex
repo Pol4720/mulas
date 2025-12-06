@@ -413,35 +413,35 @@ El proyecto está organizado en los siguientes módulos principales:
 
 \begin{verbatim}
 discrete_logistics/
-├── core/
-│   ├── problem.py      # Estructuras de datos
-│   └── instance_generator.py
-├── algorithms/
-│   ├── base.py         # Clase abstracta Algorithm
-│   ├── greedy.py       # FFD, BFD, WFD, LPT
-│   ├── dynamic_programming.py
-│   ├── branch_and_bound.py
-│   ├── metaheuristics.py  # SA, GA, Tabu
-│   └── approximation.py
-├── visualizations/
-│   ├── plots.py        # Gráficos estáticos
-│   ├── animations.py   # Animaciones Manim/Plotly
-│   └── interactive.py  # Componentes interactivos
-├── theory/
-│   ├── formalization.py
-│   ├── complexity.py
-│   └── pseudocode.py
-├── benchmarks/
-│   ├── runner.py
-│   ├── instances.py
-│   └── analysis.py
-├── dashboard/
-│   ├── app.py          # Aplicación Streamlit
-│   └── components.py
-└── utils/
-    ├── validators.py
-    ├── exporters.py
-    └── helpers.py
++-- core/
+|   +-- problem.py          # Estructuras de datos
+|   +-- instance_generator.py
++-- algorithms/
+|   +-- base.py             # Clase abstracta Algorithm
+|   +-- greedy.py           # FFD, BFD, WFD, LPT
+|   +-- dynamic_programming.py
+|   +-- branch_and_bound.py
+|   +-- metaheuristics.py   # SA, GA, Tabu
+|   +-- approximation.py
++-- visualizations/
+|   +-- plots.py            # Graficos estaticos
+|   +-- animations.py       # Animaciones Manim/Plotly
+|   +-- interactive.py      # Componentes interactivos
++-- theory/
+|   +-- formalization.py
+|   +-- complexity.py
+|   +-- pseudocode.py
++-- benchmarks/
+|   +-- runner.py
+|   +-- instances.py
+|   +-- analysis.py
++-- dashboard/
+|   +-- app.py              # Aplicacion Streamlit
+|   +-- components.py
++-- utils/
+    +-- validators.py
+    +-- exporters.py
+    +-- helpers.py
 \end{verbatim}
 
 \subsection{Estructuras de Datos Principales}

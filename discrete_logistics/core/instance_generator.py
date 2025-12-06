@@ -48,6 +48,7 @@ class InstanceGenerator:
         weight_range: Tuple[float, float] = (1, 100),
         value_range: Tuple[float, float] = (1, 100),
         capacity_factor: float = 1.5,
+        capacity_variation: float = 0.0,
         name: Optional[str] = None
     ) -> Problem:
         """
@@ -58,7 +59,9 @@ class InstanceGenerator:
             num_bins: Number of bins
             weight_range: (min, max) for uniform weight distribution
             value_range: (min, max) for uniform value distribution
-            capacity_factor: Multiply average weight load by this to get capacity
+            capacity_factor: Multiply average weight load by this to get base capacity
+            capacity_variation: Variation factor for individual bin capacities (0-1)
+                              0 = all bins same capacity, 1 = capacities vary up to 100%
             name: Instance name
             
         Returns:
@@ -67,10 +70,20 @@ class InstanceGenerator:
         weights = self.rng.uniform(weight_range[0], weight_range[1], n_items)
         values = self.rng.uniform(value_range[0], value_range[1], n_items)
         
-        # Calculate capacity to ensure feasibility
+        # Calculate base capacity to ensure feasibility
         avg_weight_per_bin = weights.sum() / num_bins
-        capacity = avg_weight_per_bin * capacity_factor
-        capacity = max(capacity, weights.max() + 0.01)  # Must fit largest item
+        base_capacity = avg_weight_per_bin * capacity_factor
+        base_capacity = max(base_capacity, weights.max() + 0.01)  # Must fit largest item
+        
+        # Generate individual bin capacities with variation
+        if capacity_variation > 0:
+            variations = 1 + self.rng.uniform(-capacity_variation, capacity_variation, num_bins)
+            bin_capacities = [float(base_capacity * v) for v in variations]
+            # Ensure at least one bin can fit the largest item
+            max_cap_idx = np.argmax(bin_capacities)
+            bin_capacities[max_cap_idx] = max(bin_capacities[max_cap_idx], weights.max() + 0.01)
+        else:
+            bin_capacities = [float(base_capacity)] * num_bins
         
         items = [
             Item(id=i, weight=float(w), value=float(v))
@@ -82,7 +95,7 @@ class InstanceGenerator:
         return Problem(
             items=items,
             num_bins=num_bins,
-            bin_capacity=float(capacity),
+            bin_capacities=bin_capacities,
             name=instance_name
         )
     
@@ -95,6 +108,7 @@ class InstanceGenerator:
         value_mean: float = 50,
         value_std: float = 15,
         capacity_factor: float = 1.5,
+        capacity_variation: float = 0.0,
         name: Optional[str] = None
     ) -> Problem:
         """
@@ -108,6 +122,7 @@ class InstanceGenerator:
             value_mean: Mean value
             value_std: Value standard deviation
             capacity_factor: Capacity multiplier
+            capacity_variation: Variation factor for individual bin capacities (0-1)
             name: Instance name
             
         Returns:
@@ -120,8 +135,17 @@ class InstanceGenerator:
         values = np.clip(values, 1, None)
         
         avg_weight_per_bin = weights.sum() / num_bins
-        capacity = avg_weight_per_bin * capacity_factor
-        capacity = max(capacity, weights.max() + 0.01)
+        base_capacity = avg_weight_per_bin * capacity_factor
+        base_capacity = max(base_capacity, weights.max() + 0.01)
+        
+        # Generate individual bin capacities with variation
+        if capacity_variation > 0:
+            variations = 1 + self.rng.uniform(-capacity_variation, capacity_variation, num_bins)
+            bin_capacities = [float(base_capacity * v) for v in variations]
+            max_cap_idx = np.argmax(bin_capacities)
+            bin_capacities[max_cap_idx] = max(bin_capacities[max_cap_idx], weights.max() + 0.01)
+        else:
+            bin_capacities = [float(base_capacity)] * num_bins
         
         items = [
             Item(id=i, weight=float(w), value=float(v))
@@ -133,7 +157,7 @@ class InstanceGenerator:
         return Problem(
             items=items,
             num_bins=num_bins,
-            bin_capacity=float(capacity),
+            bin_capacities=bin_capacities,
             name=instance_name
         )
     
@@ -144,6 +168,7 @@ class InstanceGenerator:
         correlation: float = 0.8,
         weight_range: Tuple[float, float] = (1, 100),
         capacity_factor: float = 1.5,
+        capacity_variation: float = 0.0,
         name: Optional[str] = None
     ) -> Problem:
         """
@@ -157,6 +182,7 @@ class InstanceGenerator:
             correlation: Target correlation coefficient (-1 to 1)
             weight_range: (min, max) for weight distribution
             capacity_factor: Capacity multiplier
+            capacity_variation: Variation factor for individual bin capacities (0-1)
             name: Instance name
             
         Returns:
@@ -173,8 +199,17 @@ class InstanceGenerator:
         values = np.clip(values, 1, None)
         
         avg_weight_per_bin = weights.sum() / num_bins
-        capacity = avg_weight_per_bin * capacity_factor
-        capacity = max(capacity, weights.max() + 0.01)
+        base_capacity = avg_weight_per_bin * capacity_factor
+        base_capacity = max(base_capacity, weights.max() + 0.01)
+        
+        # Generate individual bin capacities with variation
+        if capacity_variation > 0:
+            variations = 1 + self.rng.uniform(-capacity_variation, capacity_variation, num_bins)
+            bin_capacities = [float(base_capacity * v) for v in variations]
+            max_cap_idx = np.argmax(bin_capacities)
+            bin_capacities[max_cap_idx] = max(bin_capacities[max_cap_idx], weights.max() + 0.01)
+        else:
+            bin_capacities = [float(base_capacity)] * num_bins
         
         items = [
             Item(id=i, weight=float(w), value=float(v))
@@ -186,7 +221,7 @@ class InstanceGenerator:
         return Problem(
             items=items,
             num_bins=num_bins,
-            bin_capacity=float(capacity),
+            bin_capacities=bin_capacities,
             name=instance_name
         )
     
@@ -199,6 +234,7 @@ class InstanceGenerator:
         value_range: Tuple[float, float] = (1, 100),
         cluster_std: float = 5,
         capacity_factor: float = 1.5,
+        capacity_variation: float = 0.0,
         name: Optional[str] = None
     ) -> Problem:
         """
@@ -214,6 +250,7 @@ class InstanceGenerator:
             value_range: (min, max) range for cluster centers
             cluster_std: Standard deviation within clusters
             capacity_factor: Capacity multiplier
+            capacity_variation: Variation factor for individual bin capacities (0-1)
             name: Instance name
             
         Returns:
@@ -248,8 +285,17 @@ class InstanceGenerator:
         values = np.clip(np.array(values), 1, value_range[1])
         
         avg_weight_per_bin = weights.sum() / num_bins
-        capacity = avg_weight_per_bin * capacity_factor
-        capacity = max(capacity, weights.max() + 0.01)
+        base_capacity = avg_weight_per_bin * capacity_factor
+        base_capacity = max(base_capacity, weights.max() + 0.01)
+        
+        # Generate individual bin capacities with variation
+        if capacity_variation > 0:
+            variations = 1 + self.rng.uniform(-capacity_variation, capacity_variation, num_bins)
+            bin_capacities = [float(base_capacity * v) for v in variations]
+            max_cap_idx = np.argmax(bin_capacities)
+            bin_capacities[max_cap_idx] = max(bin_capacities[max_cap_idx], weights.max() + 0.01)
+        else:
+            bin_capacities = [float(base_capacity)] * num_bins
         
         items = [
             Item(id=i, weight=float(w), value=float(v))
@@ -261,7 +307,7 @@ class InstanceGenerator:
         return Problem(
             items=items,
             num_bins=num_bins,
-            bin_capacity=float(capacity),
+            bin_capacities=bin_capacities,
             name=instance_name
         )
     
@@ -273,6 +319,7 @@ class InstanceGenerator:
         large_range: Tuple[float, float] = (80, 100),
         small_fraction: float = 0.7,
         capacity_factor: float = 1.5,
+        capacity_variation: float = 0.0,
         name: Optional[str] = None
     ) -> Problem:
         """
@@ -285,6 +332,7 @@ class InstanceGenerator:
             large_range: (min, max) for large items
             small_fraction: Fraction of items that are small
             capacity_factor: Capacity multiplier
+            capacity_variation: Variation factor for individual bin capacities (0-1)
             name: Instance name
             
         Returns:
@@ -308,8 +356,17 @@ class InstanceGenerator:
         values = values[indices]
         
         avg_weight_per_bin = weights.sum() / num_bins
-        capacity = avg_weight_per_bin * capacity_factor
-        capacity = max(capacity, weights.max() + 0.01)
+        base_capacity = avg_weight_per_bin * capacity_factor
+        base_capacity = max(base_capacity, weights.max() + 0.01)
+        
+        # Generate individual bin capacities with variation
+        if capacity_variation > 0:
+            variations = 1 + self.rng.uniform(-capacity_variation, capacity_variation, num_bins)
+            bin_capacities = [float(base_capacity * v) for v in variations]
+            max_cap_idx = np.argmax(bin_capacities)
+            bin_capacities[max_cap_idx] = max(bin_capacities[max_cap_idx], weights.max() + 0.01)
+        else:
+            bin_capacities = [float(base_capacity)] * num_bins
         
         items = [
             Item(id=i, weight=float(w), value=float(v))
@@ -321,7 +378,7 @@ class InstanceGenerator:
         return Problem(
             items=items,
             num_bins=num_bins,
-            bin_capacity=float(capacity),
+            bin_capacities=bin_capacities,
             name=instance_name
         )
     
@@ -388,8 +445,10 @@ class InstanceGenerator:
         values = np.array(values)
         
         avg_weight_per_bin = weights.sum() / num_bins
-        capacity = avg_weight_per_bin * capacity_factor
-        capacity = max(capacity, weights.max() + 0.01)
+        base_capacity = avg_weight_per_bin * capacity_factor
+        base_capacity = max(base_capacity, weights.max() + 0.01)
+        
+        bin_capacities = [float(base_capacity)] * num_bins
         
         items = [
             Item(id=i, weight=float(w), value=float(v))
@@ -401,7 +460,7 @@ class InstanceGenerator:
         return Problem(
             items=items,
             num_bins=num_bins,
-            bin_capacity=float(capacity),
+            bin_capacities=bin_capacities,
             name=instance_name
         )
     
@@ -430,8 +489,10 @@ class InstanceGenerator:
         weights = self.rng.uniform(value_range[0], value_range[1], n_items)
         
         avg_weight_per_bin = weights.sum() / 2
-        capacity = avg_weight_per_bin * capacity_factor
-        capacity = max(capacity, weights.max() + 0.01)
+        base_capacity = avg_weight_per_bin * capacity_factor
+        base_capacity = max(base_capacity, weights.max() + 0.01)
+        
+        bin_capacities = [float(base_capacity), float(base_capacity)]
         
         items = [
             Item(id=i, weight=float(w), value=float(v))
@@ -443,7 +504,7 @@ class InstanceGenerator:
         return Problem(
             items=items,
             num_bins=2,
-            bin_capacity=float(capacity),
+            bin_capacities=bin_capacities,
             name=instance_name
         )
     
@@ -483,7 +544,8 @@ class InstanceGenerator:
         return Problem(
             items=items,
             num_bins=max(1, num_bins),
-            bin_capacity=base_problem.bin_capacity,
+            bin_capacities=base_problem.bin_capacities[:max(1, num_bins)] if num_bins <= len(base_problem.bin_capacities) 
+                          else base_problem.bin_capacities + [base_problem.bin_capacities[-1]] * (num_bins - len(base_problem.bin_capacities)),
             name=instance_name
         )
     
@@ -552,7 +614,7 @@ class InstanceGenerator:
                 "filename": filename,
                 "n_items": p.n_items,
                 "num_bins": p.num_bins,
-                "bin_capacity": p.bin_capacity
+                "bin_capacities": p.bin_capacities
             })
         
         # Save manifest

@@ -114,7 +114,7 @@ class BranchAndBound(Algorithm):
         n = problem.n_items
         k = problem.num_bins
         items = problem.items
-        capacity = problem.bin_capacity
+        capacities = problem.bin_capacities  # Lista de capacidades individuales
         
         # Sort items by value (descending) for better pruning
         sorted_indices = sorted(range(n), key=lambda i: items[i].value, reverse=True)
@@ -176,7 +176,7 @@ class BranchAndBound(Algorithm):
                     
                     self._record_step(
                         f"New best solution: diff={best_diff:.2f}",
-                        self._assignment_to_bins(best_assignment, sorted_items, k, capacity),
+                        self._assignment_to_bins(best_assignment, sorted_items, k, capacities),
                         extra_data={"diff": best_diff, "nodes": self.nodes_explored}
                     )
                 continue
@@ -189,8 +189,8 @@ class BranchAndBound(Algorithm):
             bin_order = sorted(range(k), key=lambda b: node.bin_values[b])
             
             for bin_id in bin_order:
-                # Feasibility check
-                if node.bin_weights[bin_id] + item.weight > capacity:
+                # Feasibility check - usar capacidad individual
+                if node.bin_weights[bin_id] + item.weight > capacities[bin_id]:
                     continue
                 
                 # Create child node
@@ -207,7 +207,7 @@ class BranchAndBound(Algorithm):
                 
                 # Calculate bounds
                 child.lower_bound = self._calculate_lower_bound(
-                    child, sorted_items, n, k, capacity
+                    child, sorted_items, n, k, capacities
                 )
                 child.upper_bound = child.difference
                 
@@ -219,7 +219,7 @@ class BranchAndBound(Algorithm):
         
         # Build solution
         solution = self._build_solution(
-            best_assignment, sorted_items, k, capacity, problem
+            best_assignment, sorted_items, k, capacities, problem
         )
         
         solution.execution_time = self._get_elapsed_time()
@@ -299,10 +299,10 @@ class BranchAndBound(Algorithm):
         assignment: List[int],
         items: List[Item],
         k: int,
-        capacity: float
+        capacities: List[float]
     ) -> List[Bin]:
         """Convert assignment array to bins."""
-        bins = [Bin(i, capacity) for i in range(k)]
+        bins = [Bin(i, capacities[i]) for i in range(k)]
         
         for item_idx, bin_id in enumerate(assignment):
             if bin_id >= 0 and bin_id < k:
@@ -315,11 +315,11 @@ class BranchAndBound(Algorithm):
         assignment: List[int],
         sorted_items: List[Item],
         k: int,
-        capacity: float,
+        capacities: List[float],
         problem: Problem
     ) -> Solution:
         """Build solution from assignment."""
-        bins = self._assignment_to_bins(assignment, sorted_items, k, capacity)
+        bins = self._assignment_to_bins(assignment, sorted_items, k, capacities)
         
         return Solution(
             bins=bins,
@@ -367,7 +367,7 @@ class BranchAndBoundDFS(Algorithm):
         n = problem.n_items
         k = problem.num_bins
         items = sorted(problem.items, key=lambda x: x.value, reverse=True)
-        capacity = problem.bin_capacity
+        capacities = problem.bin_capacities
         
         # Get initial bound from greedy
         from .greedy import RoundRobinGreedy
@@ -385,13 +385,13 @@ class BranchAndBoundDFS(Algorithm):
         
         # Run DFS
         self._dfs(
-            0, items, k, capacity,
+            0, items, k, capacities,
             assignment, bin_values, bin_weights
         )
         
         # Build solution
         if self.best_assignment:
-            bins = [Bin(i, capacity) for i in range(k)]
+            bins = [Bin(i, capacities[i]) for i in range(k)]
             for item_idx, bin_id in enumerate(self.best_assignment):
                 if bin_id >= 0:
                     bins[bin_id].add_item(items[item_idx])
@@ -413,7 +413,7 @@ class BranchAndBoundDFS(Algorithm):
         level: int,
         items: List[Item],
         k: int,
-        capacity: float,
+        capacities: List[float],
         assignment: List[int],
         bin_values: List[float],
         bin_weights: List[float]
@@ -448,7 +448,7 @@ class BranchAndBoundDFS(Algorithm):
         
         for bin_id in bin_order:
             # Feasibility check
-            if bin_weights[bin_id] + item.weight > capacity:
+            if bin_weights[bin_id] + item.weight > capacities[bin_id]:
                 continue
             
             # Make assignment
@@ -458,7 +458,7 @@ class BranchAndBoundDFS(Algorithm):
             
             # Recurse
             self._dfs(
-                level + 1, items, k, capacity,
+                level + 1, items, k, capacities,
                 assignment, bin_values, bin_weights
             )
             

@@ -128,99 +128,148 @@ class ProblemConfigurator:
     
     def render(self) -> Optional[Problem]:
         """Render the problem configuration panel."""
-        st.markdown("### 📦 Problem Configuration")
+        st.markdown("### 📦 Configuración del Problema")
         
-        with st.expander("Basic Parameters", expanded=True):
-            col1, col2, col3 = st.columns(3)
+        with st.expander("Parámetros Básicos", expanded=True):
+            col1, col2 = st.columns(2)
             
             with col1:
                 n_items = st.slider(
-                    "Number of Items (n)",
+                    "Número de Ítems (n)",
                     min_value=3,
                     max_value=100,
                     value=20,
-                    help="Total number of items to pack"
+                    help="Cantidad total de ítems a empacar"
                 )
             
             with col2:
                 n_bins = st.slider(
-                    "Number of Bins (k)",
+                    "Número de Contenedores (k)",
                     min_value=2,
                     max_value=20,
                     value=4,
-                    help="Number of available bins"
+                    help="Cantidad de contenedores disponibles"
                 )
             
-            with col3:
-                capacity = st.number_input(
-                    "Bin Capacity (C)",
+            # Capacity configuration mode
+            capacity_mode = st.radio(
+                "Configuración de Capacidad",
+                options=['Uniforme', 'Individual', 'Variable'],
+                horizontal=True,
+                help="Uniforme: igual para todos, Individual: configurar cada uno, Variable: variación aleatoria"
+            )
+            
+            if capacity_mode == 'Uniforme':
+                base_capacity = st.number_input(
+                    "Capacidad del Contenedor (C)",
                     min_value=10,
                     max_value=1000,
                     value=100,
-                    help="Maximum weight capacity per bin"
+                    help="Capacidad máxima de peso para todos los contenedores"
                 )
+                bin_capacities = [float(base_capacity)] * n_bins
+            elif capacity_mode == 'Individual':
+                st.markdown("**Establecer capacidad para cada contenedor:**")
+                bin_capacities = []
+                cols = st.columns(min(n_bins, 5))
+                for i in range(n_bins):
+                    with cols[i % 5]:
+                        cap = st.number_input(
+                            f"Cont. {i+1}",
+                            min_value=10,
+                            max_value=1000,
+                            value=100,
+                            key=f"cap_{i}"
+                        )
+                        bin_capacities.append(float(cap))
+            else:  # Variable
+                col1, col2 = st.columns(2)
+                with col1:
+                    base_capacity = st.number_input(
+                        "Capacidad Base",
+                        min_value=10,
+                        max_value=1000,
+                        value=100,
+                        help="Capacidad promedio"
+                    )
+                with col2:
+                    capacity_variation = st.slider(
+                        "Variación %",
+                        min_value=0,
+                        max_value=50,
+                        value=20,
+                        help="Porcentaje de variación respecto a la base"
+                    )
+                # Generate variable capacities
+                var = capacity_variation / 100.0
+                bin_capacities = [
+                    float(base_capacity * (1 + np.random.uniform(-var, var)))
+                    for _ in range(n_bins)
+                ]
+                st.caption(f"Capacidades generadas: {[f'{c:.1f}' for c in bin_capacities]}")
         
-        with st.expander("Distribution Settings", expanded=False):
+        with st.expander("Configuración de Distribución", expanded=False):
             distribution = st.selectbox(
-                "Weight/Value Distribution",
+                "Distribución de Peso/Valor",
                 options=['uniform', 'normal', 'bimodal', 'clustered'],
-                help="Statistical distribution for generating item weights and values"
+                format_func=lambda x: {'uniform': 'Uniforme', 'normal': 'Normal', 'bimodal': 'Bimodal', 'clustered': 'Agrupada'}[x],
+                help="Distribución estadística para generar pesos y valores de ítems"
             )
             
             col1, col2 = st.columns(2)
             
             with col1:
                 weight_range = st.slider(
-                    "Weight Range",
+                    "Rango de Peso",
                     min_value=1,
                     max_value=100,
                     value=(5, 30),
-                    help="Min and max item weights"
+                    help="Peso mínimo y máximo de los ítems"
                 )
             
             with col2:
                 value_range = st.slider(
-                    "Value Range", 
+                    "Rango de Valor", 
                     min_value=1,
                     max_value=100,
                     value=(10, 50),
-                    help="Min and max item values"
+                    help="Valor mínimo y máximo de los ítems"
                 )
             
             correlation = st.slider(
-                "Weight-Value Correlation",
+                "Correlación Peso-Valor",
                 min_value=-1.0,
                 max_value=1.0,
                 value=0.5,
                 step=0.1,
-                help="Correlation between item weights and values"
+                help="Correlación entre pesos y valores de los ítems"
             )
         
-        with st.expander("Advanced Options", expanded=False):
+        with st.expander("Opciones Avanzadas", expanded=False):
             seed = st.number_input(
-                "Random Seed (0 for random)",
+                "Semilla Aleatoria (0 para aleatorio)",
                 min_value=0,
                 max_value=99999,
                 value=42,
-                help="Seed for reproducible instance generation"
+                help="Semilla para generación reproducible de instancias"
             )
             
             preset = st.selectbox(
-                "Load Preset Instance",
-                options=['Custom', 'Small (Easy)', 'Medium', 'Large (Hard)', 'Benchmark A', 'Benchmark B'],
-                help="Load a predefined test instance"
+                "Cargar Instancia Predefinida",
+                options=['Personalizada', 'Pequeña (Fácil)', 'Mediana', 'Grande (Difícil)', 'Benchmark A', 'Benchmark B'],
+                help="Cargar una instancia de prueba predefinida"
             )
             
-            if preset != 'Custom':
-                n_items, n_bins, capacity = self._get_preset_params(preset)
+            if preset != 'Personalizada':
+                n_items, n_bins, bin_capacities = self._get_preset_params(preset)
         
         # Generate problem button
-        if st.button("🎲 Generate Instance", type="primary", use_container_width=True):
-            with st.spinner("Generating problem instance..."):
+        if st.button("🎲 Generar Instancia", type="primary", use_container_width=True):
+            with st.spinner("Generando instancia del problema..."):
                 problem = self._generate_problem(
                     n_items=n_items,
                     n_bins=n_bins,
-                    capacity=capacity,
+                    bin_capacities=bin_capacities,
                     distribution=distribution,
                     weight_range=weight_range,
                     value_range=value_range,
@@ -230,25 +279,25 @@ class ProblemConfigurator:
                 
                 # Store in session state
                 st.session_state['current_problem'] = problem
-                st.success(f"✅ Generated instance with {n_items} items and {n_bins} bins")
+                st.success(f"✅ Instancia generada con {n_items} ítems y {n_bins} contenedores")
                 
                 return problem
         
         # Return existing problem if available
         return st.session_state.get('current_problem')
     
-    def _get_preset_params(self, preset: str) -> Tuple[int, int, int]:
+    def _get_preset_params(self, preset: str) -> Tuple[int, int, List[float]]:
         """Get parameters for preset instances."""
         presets = {
-            'Small (Easy)': (10, 3, 50),
-            'Medium': (30, 5, 100),
-            'Large (Hard)': (50, 8, 150),
-            'Benchmark A': (25, 4, 80),
-            'Benchmark B': (40, 6, 120),
+            'Pequeña (Fácil)': (10, 3, [50.0, 50.0, 50.0]),
+            'Mediana': (30, 5, [100.0, 100.0, 100.0, 100.0, 100.0]),
+            'Grande (Difícil)': (50, 8, [150.0] * 8),
+            'Benchmark A': (25, 4, [80.0, 85.0, 75.0, 90.0]),
+            'Benchmark B': (40, 6, [120.0, 110.0, 130.0, 115.0, 125.0, 120.0]),
         }
-        return presets.get(preset, (20, 4, 100))
+        return presets.get(preset, (20, 4, [100.0] * 4))
     
-    def _generate_problem(self, n_items: int, n_bins: int, capacity: int,
+    def _generate_problem(self, n_items: int, n_bins: int, bin_capacities: List[float],
                          distribution: str, weight_range: Tuple[int, int],
                          value_range: Tuple[int, int], correlation: float,
                          seed: Optional[int]) -> Problem:
@@ -300,25 +349,32 @@ class ProblemConfigurator:
         return Problem(
             items=items,
             num_bins=n_bins,
-            bin_capacity=capacity,
-            name=f"instance_{n_items}_{n_bins}_{capacity}"
+            bin_capacities=bin_capacities,
+            name=f"instance_{n_items}_{n_bins}"
         )
     
     def render_problem_summary(self, problem: Problem):
         """Display a summary of the current problem instance."""
-        st.markdown("### 📊 Instance Summary")
+        st.markdown("### 📊 Resumen de la Instancia")
         
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            st.metric("Items", len(problem.items))
+            st.metric("Ítems", len(problem.items))
         with col2:
-            st.metric("Bins", problem.num_bins)
+            st.metric("Contenedores", problem.num_bins)
         with col3:
-            st.metric("Capacity", problem.bin_capacity)
+            st.metric("Capacidad Total", f"{sum(problem.bin_capacities):.1f}")
         with col4:
             total_weight = sum(item.weight for item in problem.items)
-            st.metric("Total Weight", f"{total_weight:.1f}")
+            st.metric("Peso Total", f"{total_weight:.1f}")
+        
+        # Show individual bin capacities
+        st.markdown("**Capacidades de los Contenedores:**")
+        cap_cols = st.columns(min(problem.num_bins, 6))
+        for i, cap in enumerate(problem.bin_capacities):
+            with cap_cols[i % 6]:
+                st.caption(f"Cont. {i+1}: {cap:.1f}")
         
         # Items distribution chart
         fig = go.Figure()
@@ -335,16 +391,16 @@ class ProblemConfigurator:
                 color=values,
                 colorscale='Viridis',
                 showscale=True,
-                colorbar=dict(title="Value")
+                colorbar=dict(title="Valor")
             ),
             text=[item.id for item in problem.items],
-            hovertemplate='<b>%{text}</b><br>Weight: %{x:.2f}<br>Value: %{y:.2f}<extra></extra>'
+            hovertemplate='<b>%{text}</b><br>Peso: %{x:.2f}<br>Valor: %{y:.2f}<extra></extra>'
         ))
         
         fig.update_layout(
-            title="Items Distribution",
-            xaxis_title="Weight",
-            yaxis_title="Value",
+            title="Distribución de los Ítems",
+            xaxis_title="Peso",
+            yaxis_title="Valor",
             template=self.theme['plotly_template'],
             height=300
         )
@@ -360,85 +416,85 @@ class AlgorithmSelector:
     ALGORITHM_INFO = {
         'FirstFitDecreasing': {
             'name': 'First Fit Decreasing (FFD)',
-            'category': 'Greedy',
+            'category': 'Voraz',
             'complexity': 'O(n log n)',
-            'description': 'Sorts items by weight and assigns each to the first bin that fits.',
+            'description': 'Ordena ítems por peso y asigna cada uno al primer contenedor con espacio.',
             'params': {}
         },
         'BestFitDecreasing': {
             'name': 'Best Fit Decreasing (BFD)',
-            'category': 'Greedy',
+            'category': 'Voraz',
             'complexity': 'O(n² log n)',
-            'description': 'Assigns each item to the bin with minimum remaining capacity.',
+            'description': 'Asigna cada ítem al contenedor con menor capacidad restante.',
             'params': {}
         },
         'WorstFitDecreasing': {
             'name': 'Worst Fit Decreasing (WFD)',
-            'category': 'Greedy', 
+            'category': 'Voraz', 
             'complexity': 'O(n log n)',
-            'description': 'Assigns items to bins with maximum remaining capacity for balance.',
+            'description': 'Asigna ítems a contenedores con mayor capacidad restante para balance.',
             'params': {}
         },
         'RoundRobinGreedy': {
-            'name': 'Round Robin Greedy',
-            'category': 'Greedy',
+            'name': 'Round Robin Voraz',
+            'category': 'Voraz',
             'complexity': 'O(n log n)',
-            'description': 'Distributes items evenly across bins in round-robin fashion.',
+            'description': 'Distribuye ítems uniformemente entre contenedores en forma circular.',
             'params': {}
         },
         'LargestDifferenceFirst': {
-            'name': 'Largest Difference First',
-            'category': 'Greedy',
+            'name': 'Mayor Diferencia Primero',
+            'category': 'Voraz',
             'complexity': 'O(n log n)',
-            'description': 'Prioritizes reducing the largest value difference between bins.',
+            'description': 'Prioriza reducir la mayor diferencia de valor entre contenedores.',
             'params': {}
         },
         'SimulatedAnnealing': {
-            'name': 'Simulated Annealing',
-            'category': 'Metaheuristic',
-            'complexity': 'O(iterations × n)',
-            'description': 'Probabilistic optimization inspired by metallurgical annealing.',
+            'name': 'Recocido Simulado',
+            'category': 'Metaheurística',
+            'complexity': 'O(iteraciones × n)',
+            'description': 'Optimización probabilística inspirada en el recocido metalúrgico.',
             'params': {
-                'initial_temp': (100.0, 1.0, 1000.0, 'Initial temperature'),
-                'cooling_rate': (0.995, 0.9, 0.999, 'Temperature cooling rate'),
-                'max_iterations': (10000, 100, 100000, 'Maximum iterations')
+                'initial_temp': (100.0, 1.0, 1000.0, 'Temperatura inicial'),
+                'cooling_rate': (0.995, 0.9, 0.999, 'Tasa de enfriamiento'),
+                'max_iterations': (10000, 100, 100000, 'Iteraciones máximas')
             }
         },
         'GeneticAlgorithm': {
-            'name': 'Genetic Algorithm',
-            'category': 'Metaheuristic',
-            'complexity': 'O(generations × pop × n)',
-            'description': 'Evolutionary algorithm using selection, crossover, and mutation.',
+            'name': 'Algoritmo Genético',
+            'category': 'Metaheurística',
+            'complexity': 'O(generaciones × pob × n)',
+            'description': 'Algoritmo evolutivo usando selección, cruce y mutación.',
             'params': {
-                'population_size': (50, 10, 200, 'Population size'),
-                'generations': (100, 10, 500, 'Number of generations'),
-                'mutation_rate': (0.1, 0.01, 0.5, 'Mutation probability')
+                'population_size': (50, 10, 200, 'Tamaño de población'),
+                'generations': (100, 10, 500, 'Número de generaciones'),
+                'mutation_rate': (0.1, 0.01, 0.5, 'Probabilidad de mutación')
             }
         },
         'TabuSearch': {
-            'name': 'Tabu Search',
-            'category': 'Metaheuristic',
-            'complexity': 'O(iterations × neighbors)',
-            'description': 'Local search with memory to avoid cycling.',
+            'name': 'Búsqueda Tabú',
+            'category': 'Metaheurística',
+            'complexity': 'O(iteraciones × vecinos)',
+            'description': 'Búsqueda local con memoria para evitar ciclos.',
             'params': {
-                'tabu_tenure': (10, 1, 50, 'Tabu list size'),
-                'max_iterations': (1000, 100, 10000, 'Maximum iterations')
+                'tabu_tenure': (10, 1, 50, 'Tamaño lista tabú'),
+                'max_iterations': (1000, 100, 10000, 'Iteraciones máximas')
             }
         },
         'BranchAndBound': {
             'name': 'Branch and Bound',
-            'category': 'Exact',
-            'complexity': 'O(k^n) worst case',
-            'description': 'Systematic enumeration with intelligent pruning.',
+            'category': 'Exacto',
+            'complexity': 'O(k^n) peor caso',
+            'description': 'Enumeración sistemática con poda inteligente.',
             'params': {
-                'time_limit': (60.0, 1.0, 300.0, 'Time limit in seconds')
+                'time_limit': (60.0, 1.0, 300.0, 'Límite de tiempo (segundos)')
             }
         },
         'DynamicProgramming': {
-            'name': 'Dynamic Programming',
-            'category': 'Exact',
+            'name': 'Programación Dinámica',
+            'category': 'Exacto',
             'complexity': 'O(n × C^k)',
-            'description': 'Optimal solution for small instances using memoization.',
+            'description': 'Solución óptima para instancias pequeñas usando memoización.',
             'params': {}
         }
     }
@@ -449,12 +505,12 @@ class AlgorithmSelector:
     
     def render(self) -> List[Tuple[str, Dict]]:
         """Render algorithm selection panel."""
-        st.markdown("### ⚙️ Algorithm Selection")
+        st.markdown("### ⚙️ Selección de Algoritmos")
         
         # Category filter
-        categories = ['All', 'Greedy', 'Metaheuristic', 'Exact']
+        categories = ['Todos', 'Voraz', 'Metaheurística', 'Exacto']
         selected_category = st.radio(
-            "Filter by Category",
+            "Filtrar por Categoría",
             options=categories,
             horizontal=True
         )
@@ -470,7 +526,7 @@ class AlgorithmSelector:
             default_selection.append(list(available_algorithms.keys())[0])
         
         selected_algorithms = st.multiselect(
-            "Select Algorithms to Run",
+            "Seleccionar Algoritmos a Ejecutar",
             options=list(available_algorithms.keys()),
             default=default_selection if default_selection else None,
             format_func=lambda x: f"{available_algorithms[x]['name']} ({available_algorithms[x]['category']})"
@@ -483,14 +539,14 @@ class AlgorithmSelector:
             info = self.ALGORITHM_INFO.get(algo_name, {})
             
             with st.expander(f"🔧 {info.get('name', algo_name)}", expanded=False):
-                st.markdown(f"**Category:** {info.get('category', 'Unknown')}")
-                st.markdown(f"**Complexity:** {info.get('complexity', 'Unknown')}")
-                st.markdown(f"**Description:** {info.get('description', 'No description')}")
+                st.markdown(f"**Categoría:** {info.get('category', 'Desconocida')}")
+                st.markdown(f"**Complejidad:** {info.get('complexity', 'Desconocida')}")
+                st.markdown(f"**Descripción:** {info.get('description', 'Sin descripción')}")
                 
                 # Parameter configuration
                 params = {}
                 if info.get('params'):
-                    st.markdown("**Parameters:**")
+                    st.markdown("**Parámetros:**")
                     for param_name, (default, min_val, max_val, desc) in info['params'].items():
                         if isinstance(default, float):
                             params[param_name] = st.slider(
@@ -509,7 +565,7 @@ class AlgorithmSelector:
     
     def _filter_algorithms(self, category: str) -> Dict[str, Dict]:
         """Filter algorithms by category."""
-        if category == 'All':
+        if category == 'Todos':
             return self.ALGORITHM_INFO
         return {
             name: info for name, info in self.ALGORITHM_INFO.items()

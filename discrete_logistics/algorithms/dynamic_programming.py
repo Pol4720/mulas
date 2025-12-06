@@ -76,22 +76,23 @@ class DynamicProgramming(Algorithm):
         n = problem.n_items
         k = problem.num_bins
         items = problem.items
-        capacity = problem.bin_capacity
+        capacities = problem.bin_capacities
         
-        # Precompute subset properties
+        # Precompute subset properties for each bin capacity
         self._log("Precomputing feasible subsets...")
-        feasible_subsets = self._compute_feasible_subsets(items, capacity)
-        self._log(f"Found {len(feasible_subsets)} feasible subsets")
+        feasible_per_bin = self._compute_feasible_subsets_per_bin(items, capacities)
+        total_feasible = sum(len(fs) for fs in feasible_per_bin)
+        self._log(f"Found {total_feasible} total feasible subsets across bins")
         
         self._record_step(
-            f"Computed {len(feasible_subsets)} feasible subsets",
+            f"Computed feasible subsets for {k} bins",
             problem.create_empty_bins(),
-            extra_data={"n_feasible": len(feasible_subsets)}
+            extra_data={"n_feasible_total": total_feasible}
         )
         
         # DP: Find best k-partition
-        best_assignment = self._find_best_partition(
-            items, k, feasible_subsets
+        best_assignment = self._find_best_partition_multi_cap(
+            items, k, feasible_per_bin
         )
         
         if best_assignment is None:
@@ -120,6 +121,44 @@ class DynamicProgramming(Algorithm):
         self._log(f"Completed in {solution.execution_time:.4f}s")
         
         return solution
+    
+    def _compute_feasible_subsets_per_bin(
+        self,
+        items: List[Item],
+        capacities: List[float]
+    ) -> List[Dict[int, Tuple[float, float]]]:
+        """
+        Compute all subsets of items that fit within each bin's capacity.
+        
+        Returns:
+            List of dicts (one per bin), each mapping bitmask -> (total_weight, total_value)
+        """
+        n = len(items)
+        k = len(capacities)
+        feasible_per_bin = []
+        
+        for bin_id in range(k):
+            capacity = capacities[bin_id]
+            feasible = {}
+            
+            for mask in range(1 << n):
+                self._iterations += 1
+                total_weight = 0
+                total_value = 0
+                
+                for i in range(n):
+                    if mask & (1 << i):
+                        total_weight += items[i].weight
+                        total_value += items[i].value
+                
+                if total_weight <= capacity:
+                    feasible[mask] = (total_weight, total_value)
+            
+            # Include empty set
+            feasible[0] = (0, 0)
+            feasible_per_bin.append(feasible)
+        
+        return feasible_per_bin
     
     def _compute_feasible_subsets(
         self,
@@ -152,6 +191,95 @@ class DynamicProgramming(Algorithm):
         feasible[0] = (0, 0)
         
         return feasible
+    
+    def _find_best_partition_multi_cap(
+        self,
+        items: List[Item],
+        k: int,
+        feasible_per_bin: List[Dict[int, Tuple[float, float]]]
+    ) -> Optional[List[List[int]]]:
+        """
+        Find the best k-partition using DP with individual bin capacities.
+        
+        Returns:
+            List of k lists, each containing item IDs for that bin
+            Returns None if no feasible partition exists
+        """
+        n = len(items)
+        full_mask = (1 << n) - 1
+        
+        # dp[j][mask] = (best_max, best_min, assignment)
+        # j = number of bins used (0 to k)
+        # mask = items assigned so far
+        # assignment = list of item ID lists for each bin
+        
+        INF = float('inf')
+        
+        # Initialize: bin 0 (first bin)
+        dp = [{} for _ in range(k + 1)]
+        
+        # With 1 bin (bin index 0), use feasible_per_bin[0]
+        for mask, (weight, value) in feasible_per_bin[0].items():
+            dp[1][mask] = (value, value, [self._mask_to_items(mask, items)])
+        
+        # DP transition: add bins one by one
+        for j in range(2, k + 1):
+            self._log(f"DP: Processing bin {j}...")
+            bin_idx = j - 1  # Current bin index (0-based)
+            feasible_j = feasible_per_bin[bin_idx]
+            
+            for prev_mask in dp[j - 1]:
+                prev_max, prev_min, prev_assign = dp[j - 1][prev_mask]
+                remaining = full_mask ^ prev_mask  # Items not yet assigned
+                
+                # Try all feasible subsets of remaining items for this bin
+                subset = remaining
+                while subset >= 0:
+                    self._iterations += 1
+                    
+                    if subset in feasible_j:
+                        _, new_value = feasible_j[subset]
+                        new_mask = prev_mask | subset
+                        
+                        new_max = max(prev_max, new_value)
+                        new_min = min(prev_min, new_value)
+                        new_diff = new_max - new_min
+                        
+                        # Check if this is better
+                        if new_mask not in dp[j]:
+                            new_assign = prev_assign + [self._mask_to_items(subset, items)]
+                            dp[j][new_mask] = (new_max, new_min, new_assign)
+                        else:
+                            old_max, old_min, _ = dp[j][new_mask]
+                            old_diff = old_max - old_min
+                            
+                            if new_diff < old_diff:
+                                new_assign = prev_assign + [self._mask_to_items(subset, items)]
+                                dp[j][new_mask] = (new_max, new_min, new_assign)
+                    
+                    # Next subset of remaining (or break if we've done empty set)
+                    if subset == 0:
+                        break
+                    subset = (subset - 1) & remaining
+        
+        # Find best complete partition
+        if full_mask in dp[k]:
+            _, _, assignment = dp[k][full_mask]
+            return assignment
+        
+        # If exact k bins not possible, try with some empty bins
+        best_diff = INF
+        best_assign = None
+        
+        for mask in dp[k]:
+            if mask == full_mask:
+                max_v, min_v, assign = dp[k][mask]
+                diff = max_v - min_v
+                if diff < best_diff:
+                    best_diff = diff
+                    best_assign = assign
+        
+        return best_assign
     
     def _find_best_partition(
         self,

@@ -5,14 +5,14 @@ Mathematical Formulation:
 -------------------------
 Given:
 - n items with weights w_i and values v_i for i ∈ {1, ..., n}
-- k bins (mules) with weight capacity W
+- k bins (mules) with individual weight capacities C_j for j ∈ {1, ..., k}
 - 
 Objective:
     Minimize max{V_j - V_l : j, l ∈ {1, ..., k}}
     where V_j = Σ v_i for all items i assigned to bin j
 
 Subject to:
-    - Σ w_i ≤ W for all items i assigned to bin j (capacity constraint)
+    - Σ w_i ≤ C_j for all items i assigned to bin j (capacity constraint per bin)
     - Each item assigned to exactly one bin (assignment constraint)
     - All k bins must be used (coverage constraint)
 """
@@ -374,30 +374,39 @@ class Problem:
     Attributes:
         items: List of items to be packed
         num_bins: Number of bins (mules) available
-        bin_capacity: Weight capacity of each bin
+        bin_capacities: Weight capacity of each bin (list of k capacities)
         name: Optional instance name
         optimal_value: Known optimal value (if available)
     """
     items: List[Item]
     num_bins: int
-    bin_capacity: float
+    bin_capacities: List[float]
     name: str = "Instance"
     optimal_value: Optional[float] = None
     
     def __post_init__(self):
         if self.num_bins <= 0:
             raise ValueError(f"Number of bins must be positive: {self.num_bins}")
-        if self.bin_capacity <= 0:
-            raise ValueError(f"Bin capacity must be positive: {self.bin_capacity}")
+        if not self.bin_capacities:
+            raise ValueError("Bin capacities list cannot be empty")
+        if len(self.bin_capacities) != self.num_bins:
+            raise ValueError(
+                f"Number of capacities ({len(self.bin_capacities)}) must match "
+                f"number of bins ({self.num_bins})"
+            )
+        for i, cap in enumerate(self.bin_capacities):
+            if cap <= 0:
+                raise ValueError(f"Bin {i} capacity must be positive: {cap}")
         if not self.items:
             raise ValueError("Items list cannot be empty")
         
-        # Validate items fit individually
+        # Validate items fit in at least one bin
+        max_capacity = max(self.bin_capacities)
         for item in self.items:
-            if item.weight > self.bin_capacity:
+            if item.weight > max_capacity:
                 raise ValueError(
                     f"Item {item.id} weight ({item.weight}) exceeds "
-                    f"bin capacity ({self.bin_capacity})"
+                    f"maximum bin capacity ({max_capacity})"
                 )
     
     @property
@@ -418,7 +427,17 @@ class Problem:
     @property
     def total_capacity(self) -> float:
         """Total capacity across all bins."""
-        return self.num_bins * self.bin_capacity
+        return sum(self.bin_capacities)
+    
+    @property
+    def min_bin_capacity(self) -> float:
+        """Minimum bin capacity."""
+        return min(self.bin_capacities)
+    
+    @property
+    def max_bin_capacity(self) -> float:
+        """Maximum bin capacity."""
+        return max(self.bin_capacities)
     
     @property
     def is_feasible(self) -> bool:
@@ -443,8 +462,8 @@ class Problem:
         return min(values), max(values)
     
     def create_empty_bins(self) -> List[Bin]:
-        """Create k empty bins with the problem's capacity."""
-        return [Bin(i, self.bin_capacity) for i in range(self.num_bins)]
+        """Create k empty bins with individual capacities."""
+        return [Bin(i, self.bin_capacities[i]) for i in range(self.num_bins)]
     
     def create_empty_solution(self, algorithm_name: str = "Unknown") -> Solution:
         """Create an empty solution with bins ready for assignment."""
@@ -504,7 +523,7 @@ class Problem:
             "name": self.name,
             "n_items": self.n_items,
             "num_bins": self.num_bins,
-            "bin_capacity": self.bin_capacity,
+            "bin_capacities": self.bin_capacities,
             "total_weight": self.total_weight,
             "total_value": self.total_value,
             "total_capacity": self.total_capacity,
@@ -523,14 +542,14 @@ class Problem:
     
     def __repr__(self) -> str:
         return (f"Problem(name={self.name}, items={self.n_items}, "
-                f"bins={self.num_bins}, capacity={self.bin_capacity})")
+                f"bins={self.num_bins}, capacities={self.bin_capacities})")
     
     def to_dict(self) -> dict:
         return {
             "name": self.name,
             "items": [item.to_dict() for item in self.items],
             "num_bins": self.num_bins,
-            "bin_capacity": self.bin_capacity,
+            "bin_capacities": self.bin_capacities,
             "optimal_value": self.optimal_value,
             "statistics": self.get_statistics()
         }
@@ -538,10 +557,16 @@ class Problem:
     @classmethod
     def from_dict(cls, data: dict) -> 'Problem':
         items = [Item.from_dict(item_data) for item_data in data["items"]]
+        # Support legacy format with single bin_capacity
+        if "bin_capacities" in data:
+            bin_capacities = data["bin_capacities"]
+        else:
+            # Legacy support: single capacity for all bins
+            bin_capacities = [data["bin_capacity"]] * data["num_bins"]
         return cls(
             items=items,
             num_bins=data["num_bins"],
-            bin_capacity=data["bin_capacity"],
+            bin_capacities=bin_capacities,
             name=data.get("name", "Instance"),
             optimal_value=data.get("optimal_value")
         )

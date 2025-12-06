@@ -115,7 +115,7 @@ Un ítem $i \in I$ se caracteriza por un par $(w_i, v_i)$ donde:
 \end{definition}
 
 \begin{definition}[Contenedor (Bin)]
-Un contenedor $j \in \{1, \ldots, k\}$ tiene una capacidad máxima $C \in \mathbb{R}^+$.
+Un contenedor $j \in \{1, \ldots, k\}$ tiene una capacidad máxima individual $C_j \in \mathbb{R}^+$. Cada contenedor puede tener una capacidad diferente.
 \end{definition}
 
 \begin{definition}[Asignación]
@@ -125,8 +125,9 @@ Una asignación es una función $\sigma: I \rightarrow \{1, \ldots, k\}$ que map
 \begin{definition}[Asignación Factible]
 Una asignación $\sigma$ es factible si y solo si:
 \[
-\forall j \in \{1, \ldots, k\}: \sum_{i: \sigma(i) = j} w_i \leq C
+\forall j \in \{1, \ldots, k\}: \sum_{i: \sigma(i) = j} w_i \leq C_j
 \]
+donde $C_j$ es la capacidad específica del contenedor $j$.
 \end{definition}
 
 \subsection{Formulación del Problema}
@@ -136,7 +137,7 @@ Una asignación $\sigma$ es factible si y solo si:
     \item Conjunto de ítems $I = \{1, 2, \ldots, n\}$
     \item Peso $w_i > 0$ y valor $v_i \geq 0$ para cada ítem $i \in I$
     \item Número de contenedores $k \in \mathbb{Z}^+$
-    \item Capacidad por contenedor $C > 0$
+    \item Capacidad individual $C_j > 0$ para cada contenedor $j \in \{1, \ldots, k\}$
 \end{itemize}
 
 \textbf{Variable de Decisión:}
@@ -164,7 +165,7 @@ donde $V_j = \sum_{i: \sigma(i)=j} v_i$ es el valor total del contenedor $j$.
 \begin{align}
 \text{minimizar} \quad & z \\
 \text{sujeto a:} \quad & \sum_{j=1}^{k} x_{ij} = 1 & \forall i \in I \label{eq:assignment}\\
-& \sum_{i=1}^{n} w_i \cdot x_{ij} \leq C & \forall j = 1, \ldots, k \label{eq:capacity}\\
+& \sum_{i=1}^{n} w_i \cdot x_{ij} \leq C_j & \forall j = 1, \ldots, k \label{eq:capacity}\\
 & \sum_{i=1}^{n} v_i \cdot x_{ij} \leq z & \forall j = 1, \ldots, k \label{eq:makespan}\\
 & x_{ij} \in \{0, 1\} & \forall i \in I, j = 1, \ldots, k \label{eq:binary}\\
 & z \geq 0 &
@@ -173,7 +174,7 @@ donde $V_j = \sum_{i: \sigma(i)=j} v_i$ es el valor total del contenedor $j$.
 Donde:
 \begin{itemize}
     \item (\ref{eq:assignment}): Cada ítem debe asignarse a exactamente un contenedor
-    \item (\ref{eq:capacity}): Restricción de capacidad por peso
+    \item (\ref{eq:capacity}): Restricción de capacidad por peso (cada contenedor $j$ tiene capacidad $C_j$)
     \item (\ref{eq:makespan}): Definición del makespan
     \item (\ref{eq:binary}): Variables binarias de decisión
 \end{itemize}
@@ -199,8 +200,10 @@ Dado una instancia de 3-PARTITION, construimos una instancia de nuestro problema
 \begin{itemize}
     \item Para cada elemento $a_i$, creamos un ítem con $w_i = v_i = a_i$
     \item Establecemos $k = m$ contenedores
-    \item Establecemos capacidad $C = B$
+    \item Establecemos capacidad $C_j = B$ para todo $j \in \{1, \ldots, k\}$ (capacidades uniformes)
 \end{itemize}
+
+\textbf{Nota:} La reducción utiliza capacidades uniformes, pero el problema con capacidades heterogéneas es al menos tan difícil, ya que generaliza el caso uniforme.
 
 \textbf{Correctitud:}
 \begin{itemize}
@@ -260,12 +263,12 @@ El algoritmo FFD ordena los ítems por peso decreciente y asigna cada ítem al p
 \begin{algorithm}[H]
 \caption{First Fit Decreasing}
 \begin{algorithmic}[1]
-\Procedure{FFD}{$items, k, C$}
+\Procedure{FFD}{$items, k, C_1, \ldots, C_k$}
     \State $sorted\_items \gets \text{sort}(items, \text{key}=weight, \text{desc}=True)$
-    \State $bins \gets [\ ] \times k$
+    \State $bins \gets [\ ] \times k$ \Comment{Crear $k$ bins con capacidades $C_j$}
     \For{$item \in sorted\_items$}
         \For{$j \gets 1$ \textbf{to} $k$}
-            \If{$\text{weight}(bins[j]) + item.weight \leq C$}
+            \If{$\text{weight}(bins[j]) + item.weight \leq C_j$}
                 \State $bins[j].\text{add}(item)$
                 \State \textbf{break}
             \EndIf
@@ -278,16 +281,16 @@ El algoritmo FFD ordena los ítems por peso decreciente y asigna cada ítem al p
 
 \subsubsection{LPT Balanced}
 
-El algoritmo Longest Processing Time (LPT) adaptado para balanceo asigna cada ítem al contenedor con menor carga actual.
+El algoritmo Longest Processing Time (LPT) adaptado para balanceo asigna cada ítem al contenedor con menor carga actual, respetando las capacidades individuales.
 
 \begin{algorithm}[H]
 \caption{LPT Balanced}
 \begin{algorithmic}[1]
-\Procedure{LPT}{$items, k, C$}
+\Procedure{LPT}{$items, k, C_1, \ldots, C_k$}
     \State $sorted\_items \gets \text{sort}(items, \text{key}=value, \text{desc}=True)$
-    \State $bins \gets [\ ] \times k$
+    \State $bins \gets [\ ] \times k$ \Comment{Bins con capacidades individuales}
     \For{$item \in sorted\_items$}
-        \State $j^* \gets \arg\min_{j: \text{fits}(j, item)} \text{value}(bins[j])$
+        \State $j^* \gets \arg\min_{j: \text{weight}(bins[j]) + item.weight \leq C_j} \text{value}(bins[j])$
         \State $bins[j^*].\text{add}(item)$
     \EndFor
     \State \Return $bins$
@@ -302,7 +305,7 @@ El algoritmo de Branch and Bound explora sistemáticamente el espacio de solucio
 \begin{algorithm}[H]
 \caption{Branch and Bound}
 \begin{algorithmic}[1]
-\Procedure{BranchAndBound}{$items, k, C$}
+\Procedure{BranchAndBound}{$items, k, C_1, \ldots, C_k$}
     \State $best \gets \infty$
     \State $best\_solution \gets \text{null}$
     \State $queue \gets \{(\emptyset, items)\}$ \Comment{(asignación parcial, ítems restantes)}
@@ -319,7 +322,7 @@ El algoritmo de Branch and Bound explora sistemáticamente el espacio de solucio
         \Else
             \State $item \gets remaining[0]$
             \For{$j \gets 1$ \textbf{to} $k$}
-                \If{$\text{fits}(partial, j, item)$}
+                \If{$\text{weight}(partial[j]) + item.weight \leq C_j$}
                     \State $new\_partial \gets \text{assign}(partial, j, item)$
                     \State $lb \gets \text{lower\_bound}(new\_partial, remaining[1:])$
                     \If{$lb < best$} \Comment{Pruning}
@@ -455,7 +458,8 @@ class Item:
 
 @dataclass  
 class Bin:
-    capacity: float
+    id: int
+    capacity: float  # Capacidad individual del bin
     items: List[Item] = field(default_factory=list)
     
     @property
@@ -470,7 +474,7 @@ class Bin:
 class Problem:
     items: List[Item]
     num_bins: int
-    bin_capacity: float
+    bin_capacities: List[float]  # Capacidades individuales por bin
     name: str = "unnamed"
 
 @dataclass
@@ -616,7 +620,7 @@ pip install -r requirements.txt
 from discrete_logistics.core import Problem, Item
 from discrete_logistics.algorithms import FirstFitDecreasing
 
-# Crear problema
+# Crear problema con capacidades individuales por bin
 items = [
     Item("i1", weight=10, value=20),
     Item("i2", weight=15, value=30),
@@ -626,7 +630,7 @@ items = [
 problem = Problem(
     items=items,
     num_bins=2,
-    bin_capacity=20,
+    bin_capacities=[20.0, 25.0],  # Capacidades diferentes
     name="example"
 )
 

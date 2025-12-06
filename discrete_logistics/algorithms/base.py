@@ -9,7 +9,10 @@ from typing import Dict, List, Optional, Type, Callable, Any
 from dataclasses import dataclass, field
 import time
 
-from ..core.problem import Problem, Solution, Bin, Item
+try:
+    from ..core.problem import Problem, Solution, Bin, Item
+except ImportError:
+    from discrete_logistics.core.problem import Problem, Solution, Bin, Item
 
 
 @dataclass

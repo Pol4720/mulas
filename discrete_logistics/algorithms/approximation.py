@@ -10,8 +10,12 @@ These algorithms provide provable bounds on solution quality.
 
 from typing import List, Optional, Tuple
 import numpy as np
-from ..core.problem import Problem, Solution, Bin, Item
-from .base import Algorithm, register_algorithm
+try:
+    from ..core.problem import Problem, Solution, Bin, Item
+    from .base import Algorithm, register_algorithm
+except ImportError:
+    from discrete_logistics.core.problem import Problem, Solution, Bin, Item
+    from discrete_logistics.algorithms.base import Algorithm, register_algorithm
 
 
 @register_algorithm("lpt_approximation")

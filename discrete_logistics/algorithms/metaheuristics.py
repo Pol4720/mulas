@@ -17,8 +17,12 @@ from copy import deepcopy
 import random
 import math
 
-from ..core.problem import Problem, Solution, Bin, Item
-from .base import Algorithm, register_algorithm
+try:
+    from ..core.problem import Problem, Solution, Bin, Item
+    from .base import Algorithm, register_algorithm
+except ImportError:
+    from discrete_logistics.core.problem import Problem, Solution, Bin, Item
+    from discrete_logistics.algorithms.base import Algorithm, register_algorithm
 
 
 # ============================================================================

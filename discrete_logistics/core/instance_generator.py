@@ -11,7 +11,11 @@ Generates various types of test instances:
 import numpy as np
 from typing import List, Optional, Tuple, Literal
 import json
-from .problem import Problem, Item
+
+try:
+    from .problem import Problem, Item
+except ImportError:
+    from discrete_logistics.core.problem import Problem, Item
 
 
 class InstanceGenerator:

@@ -8,8 +8,12 @@ to reduce the search space.
 from typing import List, Optional, Tuple, Set
 from dataclasses import dataclass, field
 import heapq
-from ..core.problem import Problem, Solution, Bin, Item
-from .base import Algorithm, register_algorithm
+try:
+    from ..core.problem import Problem, Solution, Bin, Item
+    from .base import Algorithm, register_algorithm
+except ImportError:
+    from discrete_logistics.core.problem import Problem, Solution, Bin, Item
+    from discrete_logistics.algorithms.base import Algorithm, register_algorithm
 
 
 @dataclass

@@ -17,11 +17,18 @@ import time
 import json
 
 import sys
-sys.path.insert(0, str(__file__).rsplit('dashboard', 1)[0])
+from pathlib import Path
 
-from core.problem import Problem, Solution, Item
-from core.instance_generator import InstanceGenerator
-from algorithms import AlgorithmRegistry
+# Add the discrete_logistics package to path
+_pkg_root = Path(__file__).parent.parent
+if str(_pkg_root) not in sys.path:
+    sys.path.insert(0, str(_pkg_root))
+if str(_pkg_root.parent) not in sys.path:
+    sys.path.insert(0, str(_pkg_root.parent))
+
+from discrete_logistics.core.problem import Problem, Solution, Item
+from discrete_logistics.core.instance_generator import InstanceGenerator
+from discrete_logistics.algorithms import AlgorithmRegistry
 
 
 @dataclass

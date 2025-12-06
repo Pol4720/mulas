@@ -25,10 +25,14 @@ st.set_page_config(
 import sys
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add package root to path for absolute imports
+_pkg_root = Path(__file__).parent.parent
+if str(_pkg_root) not in sys.path:
+    sys.path.insert(0, str(_pkg_root))
+if str(_pkg_root.parent) not in sys.path:
+    sys.path.insert(0, str(_pkg_root.parent))
 
-from dashboard.components import (
+from discrete_logistics.dashboard.components import (
     ThemeManager,
     ProblemConfigurator,
     AlgorithmSelector,

@@ -11,8 +11,12 @@ very small instances (n ≤ 20, k ≤ 5).
 from typing import List, Dict, Tuple, Optional, Set
 from collections import defaultdict
 import numpy as np
-from ..core.problem import Problem, Solution, Bin, Item
-from .base import Algorithm, register_algorithm
+try:
+    from ..core.problem import Problem, Solution, Bin, Item
+    from .base import Algorithm, register_algorithm
+except ImportError:
+    from discrete_logistics.core.problem import Problem, Solution, Bin, Item
+    from discrete_logistics.algorithms.base import Algorithm, register_algorithm
 
 
 @register_algorithm("dynamic_programming")

@@ -65,18 +65,29 @@ def init_session_state():
     if 'convergence_history' not in st.session_state:
         st.session_state['convergence_history'] = {}
     if 'theme' not in st.session_state:
-        st.session_state['theme'] = 'dark'
+        st.session_state['theme'] = 'light'
 
 
 def render_sidebar():
     """Render the sidebar with navigation and settings."""
     with st.sidebar:
-        st.image("https://via.placeholder.com/150x50?text=BinPacking", use_container_width=True)
-        st.markdown("# 📦 Empaquetado Multi-Contenedor")
+        # Modern Logo Header
+        st.markdown("""
+        <div style="text-align: center; padding: 20px 0;">
+            <div style="font-size: 3rem; margin-bottom: 5px;">📦</div>
+            <div style="font-weight: 700; font-size: 1.1rem; color: #4F46E5;">
+                Multi-Bin Packing
+            </div>
+            <div style="font-size: 0.75rem; color: #64748B;">
+                Solucionador Interactivo
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
         st.markdown("---")
         
         # Navigation
-        st.markdown("### Navegación")
+        st.markdown("### 🧭 Navegación")
         page = st.radio(
             "Seleccionar Página",
             options=['🏠 Inicio', '🔬 Solucionador', '📊 Análisis', '📚 Teoría', '⚙️ Configuración'],
@@ -85,88 +96,171 @@ def render_sidebar():
         
         st.markdown("---")
         
-        # Quick settings
-        st.markdown("### Ajustes Rápidos")
-        theme = st.selectbox(
-            "Tema",
-            options=['Oscuro', 'Claro'],
-            index=0 if st.session_state['theme'] == 'dark' else 1
-        )
-        st.session_state['theme'] = 'dark' if theme == 'Oscuro' else 'light'
+        # Apply light theme (only option)
+        ThemeManager.apply_theme('light')
         
-        # Apply theme
-        ThemeManager.apply_theme(st.session_state['theme'])
+        # Quick Stats
+        st.markdown("### 📈 Estadísticas Rápidas")
+        if st.session_state.get('current_problem'):
+            prob = st.session_state['current_problem']
+            st.caption(f"📦 Ítems: {prob.n_items}")
+            st.caption(f"🗃️ Contenedores: {prob.num_bins}")
+            if st.session_state.get('results'):
+                best = min(st.session_state['results'].values(), 
+                          key=lambda x: x.value_difference)
+                st.caption(f"🏆 Mejor Diferencia: {best.value_difference:.2f}")
+        else:
+            st.caption("_Genera una instancia para ver estadísticas_")
         
         st.markdown("---")
         
         # Info section
-        with st.expander("ℹ️ Acerca de"):
+        with st.expander("ℹ️ Acerca de", expanded=False):
             st.markdown("""
             **Empaquetado Multi-Contenedor Balanceado**
             
-            Una herramienta interactiva para resolver el
-            problema NP-difícil de empaquetado en contenedores
-            con restricciones de balance.
+            Herramienta interactiva para resolver el
+            problema NP-completo de empaquetado.
             
-            Características:
-            - Múltiples algoritmos
-            - Visualización en tiempo real
-            - Análisis de benchmarks
+            **Características:**
+            - ✨ 12 algoritmos implementados
+            - 📊 Visualizaciones interactivas
+            - 🔬 Análisis de benchmarks
+            - 📚 Fundamentos teóricos
             
-            *Proyecto DAA - 2024*
+            *Proyecto DAA - Universidad de La Habana*
             """)
+        
+        # Version info
+        st.markdown("""
+        <div style="position: fixed; bottom: 20px; left: 20px; font-size: 0.7rem; color: #94A3B8;">
+            v2.0.0 | Light Mode
+        </div>
+        """, unsafe_allow_html=True)
         
         return page
 
 
 def render_home_page():
     """Render the home page."""
+    # Hero Section with Animation
     st.markdown("""
-    # 🏠 Bienvenido al Solucionador de Empaquetado Multi-Contenedor Balanceado
+    <div style="text-align: center; padding: 40px 0;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 10px;">
+            🏠 Solucionador de Empaquetado Multi-Contenedor
+        </h1>
+        <p style="font-size: 1.1rem; color: #64748B; max-width: 600px; margin: 0 auto;">
+            Explora y resuelve problemas de empaquetado balanceado con visualizaciones 
+            interactivas y múltiples algoritmos de optimización.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    Este dashboard interactivo te permite explorar y resolver el problema de
-    **Empaquetado Multi-Contenedor Balanceado con Restricciones de Capacidad**.
+    st.markdown("---")
     
-    ## 📋 Descripción del Problema
+    # Problem Description Card
+    st.markdown("""
+    <div class="metric-card">
+        <h3 style="margin-top: 0;">📋 Descripción del Problema</h3>
+        <p><strong>Dado:</strong></p>
+        <ul>
+            <li>Un conjunto de <strong>n ítems</strong>, cada uno con peso <em>w<sub>i</sub></em> y valor <em>v<sub>i</sub></em></li>
+            <li><strong>k contenedores</strong> con capacidades individuales <em>C<sub>j</sub></em></li>
+        </ul>
+        <p><strong>Objetivo:</strong></p>
+        <ul>
+            <li>Minimizar la <strong>diferencia máxima</strong> de valores totales entre contenedores</li>
+            <li>Respetando las <strong>restricciones de capacidad</strong> de cada contenedor</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
     
-    Dado:
-    - Un conjunto de **n ítems**, cada uno con peso y valor
-    - **k contenedores** con capacidades individuales C_j
+    st.markdown("")
     
-    Objetivo:
-    - Minimizar la **diferencia máxima** de valores totales entre contenedores
-    - Respetando las **restricciones de capacidad**
+    # Features Grid
+    st.markdown("### 🎯 Características Principales")
     
-    ## 🎯 Características
-    
-    | Característica | Descripción |
-    |----------------|-------------|
-    | 🔬 Múltiples Algoritmos | Voraz, Metaheurísticas, Métodos Exactos |
-    | 📊 Visualizaciones | Gráficos interactivos y animaciones |
-    | 📈 Benchmarking | Comparar rendimiento de algoritmos |
-    | 📚 Teoría | Formalización matemática y demostraciones |
-    
-    ## 🚀 Comenzar
-    
-    1. Navega a la página **Solucionador**
-    2. Configura tu instancia del problema
-    3. Selecciona algoritmos a ejecutar
-    4. ¡Analiza los resultados!
-    
-    ---
-    """)
-    
-    # Quick stats
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Algoritmos", "9+", help="Algoritmos disponibles")
+        st.markdown("""
+        <div class="metric-card" style="text-align: center; min-height: 180px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">🔬</div>
+            <h4 style="margin: 10px 0;">12 Algoritmos</h4>
+            <p style="font-size: 0.85rem; color: #64748B;">
+                Voraz, Metaheurísticas y Métodos Exactos
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
     with col2:
-        st.metric("Complejidad", "NP-Difícil", help="Clase de complejidad del problema")
+        st.markdown("""
+        <div class="metric-card" style="text-align: center; min-height: 180px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">📊</div>
+            <h4 style="margin: 10px 0;">Visualizaciones</h4>
+            <p style="font-size: 0.85rem; color: #64748B;">
+                Gráficos interactivos y animaciones
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="metric-card" style="text-align: center; min-height: 180px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">📈</div>
+            <h4 style="margin: 10px 0;">Benchmarking</h4>
+            <p style="font-size: 0.85rem; color: #64748B;">
+                Comparación de rendimiento
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown("""
+        <div class="metric-card" style="text-align: center; min-height: 180px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">📚</div>
+            <h4 style="margin: 10px 0;">Teoría</h4>
+            <p style="font-size: 0.85rem; color: #64748B;">
+                NP-Completitud y reducciones
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("")
+    
+    # Quick stats metrics
+    st.markdown("### 📊 Resumen del Sistema")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Algoritmos", "12", delta="4 exactos", delta_color="normal")
+    with col2:
+        st.metric("Complejidad", "NP-Completo", help="Clase de complejidad del problema de decisión")
     with col3:
         st.metric("Máx Ítems", "100", help="Cantidad de ítems soportada")
     with col4:
-        st.metric("Visualizaciones", "5+", help="Tipos de gráficos disponibles")
+        st.metric("Visualizaciones", "6", help="Tipos de gráficos disponibles")
+    
+    # Getting Started Section
+    st.markdown("---")
+    st.markdown("""
+    ### 🚀 Comenzar
+    
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div class="metric-card" style="flex: 1; min-width: 200px;">
+            <strong>1️⃣</strong> Navega a <strong>Solucionador</strong>
+        </div>
+        <div class="metric-card" style="flex: 1; min-width: 200px;">
+            <strong>2️⃣</strong> Configura tu <strong>instancia</strong>
+        </div>
+        <div class="metric-card" style="flex: 1; min-width: 200px;">
+            <strong>3️⃣</strong> Selecciona <strong>algoritmos</strong>
+        </div>
+        <div class="metric-card" style="flex: 1; min-width: 200px;">
+            <strong>4️⃣</strong> ¡Analiza los <strong>resultados</strong>!
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def render_solver_page(problem_config: ProblemConfigurator, 
@@ -605,23 +699,41 @@ def render_theory_page():
         
         ### Programación Dinámica
         
-        **Enfoque:** Construcción óptima de k-particiones
+        **Enfoque:** Construcción óptima de k-particiones mediante el esquema SRTBOT
         
-        **Estado:** DP[j][mask] = mejor solución con j bins asignando ítems en mask
+        #### Esquema SRTBOT
         
-        **Transición:**
-        ```
-        Para cada bin j:
-            Para cada subconjunto S factible en bin j:
-                DP[j][mask ∪ S] = mejor de:
-                    - DP[j][mask ∪ S] actual
-                    - DP[j-1][mask] + S en bin j
-        ```
+        **S - Subproblemas:**
+        - $DP[j][mask]$ = mejor solución con $j$ bins asignando ítems en $mask$
+        - $mask$ es una máscara de bits representando el subconjunto de ítems asignados
+        - Número de subproblemas: $O(k \\cdot 2^n)$
         
-        **Complejidad:**
-        - Tiempo: O(k · 3ⁿ) [iterar particiones]
-        - Espacio: O(k · 2ⁿ)
-        - Práctico: n ≤ 20
+        **R - Relación de Recurrencia:**
+        $$DP[j][mask \\cup S] = \\min_{S \\in Factible(j)} \\left\\{ \\max(V_{max}, V(S)) - \\min(V_{min}, V(S)) \\right\\}$$
+        
+        Donde:
+        - $S$ es un subconjunto factible para el bin $j$
+        - $V(S)$ es el valor total del subconjunto
+        - $V_{max}, V_{min}$ son los valores extremos actuales
+        
+        **T - Topología:**
+        1. Pre-computar subconjuntos factibles por bin
+        2. Iterar $j = 1, 2, ..., k$
+        3. Para cada $j$, iterar máscaras por cardinalidad creciente
+        
+        **B - Casos Base:**
+        - $DP[1][S] = (V(S), V(S), [S])$ para $S \\in Factible(1)$
+        - Con un solo bin, la diferencia es 0
+        
+        **O - Problema Original:**
+        - $DP[k][full\\_mask]$ donde $full\\_mask = 2^n - 1$
+        
+        **T - Tiempo de Ejecución:**
+        - Pre-computación: $O(k \\cdot 2^n \\cdot n)$
+        - DP principal: $O(k \\cdot 3^n)$ (iterar particiones)
+        - Espacio: $O(k \\cdot 2^n)$
+        
+        **Complejidad $O(3^n)$:** Surge de $\\sum_{m=0}^{n} \\binom{n}{m} 2^m = 3^n$ (teorema del binomio)
         
         **Optimización:** Pre-computar subconjuntos factibles por bin (capacidades heterogéneas)
         

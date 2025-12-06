@@ -198,11 +198,11 @@ class SimulatedAnnealing(Algorithm):
         move_type = random.choice(["move", "swap"])
         
         if move_type == "move":
-            return self._move_item(neighbor, problem.bin_capacity)
+            return self._move_item(neighbor, problem.bin_capacities)
         else:
-            return self._swap_items(neighbor, problem.bin_capacity)
+            return self._swap_items(neighbor, problem.bin_capacities)
     
-    def _move_item(self, solution: Solution, capacity: float) -> Optional[Solution]:
+    def _move_item(self, solution: Solution, capacities: List[float]) -> Optional[Solution]:
         """Move a random item from one bin to another."""
         bins = solution.bins
         
@@ -217,8 +217,9 @@ class SimulatedAnnealing(Algorithm):
         
         item = random.choice(source.items)
         
-        # Find feasible target bins
-        target_bins = [b for b in bins if b.id != source.id and b.can_fit(item)]
+        # Find feasible target bins (considering individual capacities)
+        target_bins = [b for b in bins if b.id != source.id and 
+                      b.current_weight + item.weight <= capacities[b.id]]
         if not target_bins:
             return None
         
@@ -230,7 +231,7 @@ class SimulatedAnnealing(Algorithm):
         
         return solution
     
-    def _swap_items(self, solution: Solution, capacity: float) -> Optional[Solution]:
+    def _swap_items(self, solution: Solution, capacities: List[float]) -> Optional[Solution]:
         """Swap items between two bins."""
         bins = solution.bins
         
@@ -244,11 +245,11 @@ class SimulatedAnnealing(Algorithm):
         item1 = random.choice(bin1.items)
         item2 = random.choice(bin2.items)
         
-        # Check feasibility
+        # Check feasibility (using individual capacities)
         new_weight1 = bin1.current_weight - item1.weight + item2.weight
         new_weight2 = bin2.current_weight - item2.weight + item1.weight
         
-        if new_weight1 > capacity or new_weight2 > capacity:
+        if new_weight1 > capacities[bin1.id] or new_weight2 > capacities[bin2.id]:
             return None
         
         # Execute swap
@@ -358,14 +359,14 @@ class GeneticAlgorithm(Algorithm):
         n = problem.n_items
         k = problem.num_bins
         items = problem.items
-        capacity = problem.bin_capacity
+        capacities = problem.bin_capacities
         
         # Initialize population
         population = self._initialize_population(problem)
         
         # Evaluate initial fitness
         for ind in population:
-            ind.fitness = self._evaluate_fitness(ind, items, k, capacity)
+            ind.fitness = self._evaluate_fitness(ind, items, k, capacities)
         
         population.sort()
         best = population[0]
@@ -375,7 +376,7 @@ class GeneticAlgorithm(Algorithm):
         
         self._record_step(
             f"Initial population: best={best.fitness:.2f}",
-            self._chromosome_to_bins(best.chromosome, items, k, capacity),
+            self._chromosome_to_bins(best.chromosome, items, k, capacities),
             extra_data={"generation": 0}
         )
         
@@ -407,12 +408,12 @@ class GeneticAlgorithm(Algorithm):
                 self._mutate(child2, k)
                 
                 # Repair infeasible solutions
-                self._repair(child1, items, k, capacity)
-                self._repair(child2, items, k, capacity)
+                self._repair(child1, items, k, capacities)
+                self._repair(child2, items, k, capacities)
                 
                 # Evaluate fitness
-                child1.fitness = self._evaluate_fitness(child1, items, k, capacity)
-                child2.fitness = self._evaluate_fitness(child2, items, k, capacity)
+                child1.fitness = self._evaluate_fitness(child1, items, k, capacities)
+                child2.fitness = self._evaluate_fitness(child2, items, k, capacities)
                 
                 new_population.append(child1)
                 if len(new_population) < self.population_size:
@@ -428,7 +429,7 @@ class GeneticAlgorithm(Algorithm):
                 
                 self._record_step(
                     f"Gen {gen}: New best = {best.fitness:.2f}",
-                    self._chromosome_to_bins(best.chromosome, items, k, capacity),
+                    self._chromosome_to_bins(best.chromosome, items, k, capacities),
                     extra_data={"generation": gen}
                 )
             
@@ -445,7 +446,7 @@ class GeneticAlgorithm(Algorithm):
         
         # Build solution
         solution = Solution(
-            bins=self._chromosome_to_bins(best.chromosome, items, k, capacity),
+            bins=self._chromosome_to_bins(best.chromosome, items, k, capacities),
             algorithm_name=self.name,
             execution_time=self._get_elapsed_time(),
             iterations=self._iterations,
@@ -485,14 +486,14 @@ class GeneticAlgorithm(Algorithm):
         individual: Individual,
         items: List[Item],
         k: int,
-        capacity: float
+        capacities: List[float]
     ) -> float:
         """
         Evaluate fitness of an individual.
         
         Fitness = value_difference + penalty for constraint violations
         """
-        bins = self._chromosome_to_bins(individual.chromosome, items, k, capacity)
+        bins = self._chromosome_to_bins(individual.chromosome, items, k, capacities)
         
         # Calculate value difference
         values = [b.current_value for b in bins]
@@ -501,8 +502,8 @@ class GeneticAlgorithm(Algorithm):
         # Penalty for weight violations
         penalty = 0
         for b in bins:
-            if b.current_weight > capacity:
-                penalty += (b.current_weight - capacity) * 100
+            if b.current_weight > b.capacity:
+                penalty += (b.current_weight - b.capacity) * 100
         
         return diff + penalty
     
@@ -543,14 +544,14 @@ class GeneticAlgorithm(Algorithm):
         individual: Individual,
         items: List[Item],
         k: int,
-        capacity: float
+        capacities: List[float]
     ):
         """Repair infeasible solution by moving items from overloaded bins."""
-        bins = self._chromosome_to_bins(individual.chromosome, items, k, capacity)
+        bins = self._chromosome_to_bins(individual.chromosome, items, k, capacities)
         
         for _ in range(100):  # Max repair iterations
             # Find overloaded bins
-            overloaded = [b for b in bins if b.current_weight > capacity]
+            overloaded = [b for b in bins if b.current_weight > b.capacity]
             if not overloaded:
                 break
             
@@ -608,10 +609,10 @@ class GeneticAlgorithm(Algorithm):
         chromosome: List[int],
         items: List[Item],
         k: int,
-        capacity: float
+        capacities: List[float]
     ) -> List[Bin]:
         """Convert chromosome to bins."""
-        bins = [Bin(i, capacity) for i in range(k)]
+        bins = [Bin(i, capacities[i]) for i in range(k)]
         
         for item_idx, bin_id in enumerate(chromosome):
             if 0 <= bin_id < k:
@@ -719,7 +720,7 @@ class TabuSearch(Algorithm):
         n = problem.n_items
         k = problem.num_bins
         items = problem.items
-        capacity = problem.bin_capacity
+        capacities = problem.bin_capacities
         
         # Get initial solution from greedy
         from .greedy import BestFitDecreasing
@@ -753,7 +754,7 @@ class TabuSearch(Algorithm):
             self._iterations += 1
             
             # Generate and evaluate all neighbors
-            neighbors = self._generate_neighbors(current, items, k, capacity)
+            neighbors = self._generate_neighbors(current, items, k, capacities)
             
             if not neighbors:
                 self._log("No feasible neighbors found")
@@ -835,7 +836,7 @@ class TabuSearch(Algorithm):
             
             # Diversification
             if iteration % self.diversification_freq == 0 and no_improvement_count > 20:
-                current = self._diversify(current, move_frequency, items, k, capacity)
+                current = self._diversify(current, move_frequency, items, k, capacities)
                 self._log(f"Diversification: perturbing solution")
             
             if iteration % 100 == 0:
@@ -853,7 +854,7 @@ class TabuSearch(Algorithm):
         solution: Solution,
         items: List[Item],
         k: int,
-        capacity: float
+        capacities: List[float]
     ) -> List[Tuple[Solution, TabuMove]]:
         """Generate all neighbor solutions by moving items."""
         neighbors = []
@@ -889,7 +890,7 @@ class TabuSearch(Algorithm):
         move_frequency: Dict[int, Dict[int, int]],
         items: List[Item],
         k: int,
-        capacity: float
+        capacities: List[float]
     ) -> Solution:
         """Diversify by making less-frequent moves."""
         result = solution.copy()

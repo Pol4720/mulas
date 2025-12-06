@@ -98,7 +98,7 @@ class LPTApproximation(Algorithm):
             while heap and not assigned:
                 current_val, bin_id = heapq.heappop(heap)
                 
-                if bin_weights[bin_id] + item.weight <= problem.bin_capacity:
+                if bin_weights[bin_id] + item.weight <= bins[bin_id].capacity:
                     # Assign item to this bin
                     bins[bin_id].add_item(item)
                     bin_weights[bin_id] += item.weight
@@ -198,7 +198,7 @@ class MultiWayPartition(Algorithm):
         
         n = problem.n_items
         items = problem.items
-        capacity = problem.bin_capacity
+        capacities = problem.bin_capacities
         
         # Create max-heap with (value, [item_ids])
         # Using negative values for max-heap behavior
@@ -271,7 +271,7 @@ class MultiWayPartition(Algorithm):
         """
         k = problem.num_bins
         items = sorted(problem.items, key=lambda x: x.value, reverse=True)
-        capacity = problem.bin_capacity
+        capacities = problem.bin_capacities
         
         # Use greedy assignment with look-ahead
         solution = problem.create_empty_solution(self.name)
@@ -311,7 +311,7 @@ class MultiWayPartition(Algorithm):
     def _rebalance(self, solution: Solution, problem: Problem) -> Solution:
         """Rebalance solution using local moves."""
         bins = solution.bins
-        capacity = problem.bin_capacity
+        # Each bin has its own capacity via bins[i].capacity
         
         improved = True
         max_iter = 100
@@ -359,7 +359,7 @@ class MultiWayPartition(Algorithm):
     def _local_improvement(self, solution: Solution, problem: Problem) -> Solution:
         """Apply local search improvement."""
         bins = solution.bins
-        capacity = problem.bin_capacity
+        # Each bin has its own capacity via bins[i].capacity
         
         improved = True
         max_iter = 50
@@ -485,7 +485,7 @@ class DualApproximation(Algorithm):
         Uses constrained greedy approach.
         """
         k = problem.num_bins
-        capacity = problem.bin_capacity
+        capacities = problem.bin_capacities
         total_value = problem.total_value
         
         # Target per-bin value for balance

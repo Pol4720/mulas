@@ -34,78 +34,610 @@ from discrete_logistics.algorithms import AlgorithmRegistry
 @dataclass
 class DashboardConfig:
     """Configuration for dashboard appearance and behavior."""
-    theme: str = "dark"
-    primary_color: str = "#1f77b4"
-    secondary_color: str = "#ff7f0e"
-    success_color: str = "#2ca02c"
-    warning_color: str = "#d62728"
+    theme: str = "light"
+    primary_color: str = "#4F46E5"
+    secondary_color: str = "#10B981"
+    success_color: str = "#22C55E"
+    warning_color: str = "#F59E0B"
     chart_height: int = 400
     animation_speed: float = 0.5
     
 
 class ThemeManager:
-    """Manages dashboard theme (dark/light mode)."""
-    
-    DARK_THEME = {
-        'bg_color': '#0e1117',
-        'card_bg': '#1e1e1e',
-        'text_color': '#ffffff',
-        'secondary_text': '#b0b0b0',
-        'accent_color': '#1f77b4',
-        'success': '#2ca02c',
-        'warning': '#ff7f0e',
-        'error': '#d62728',
-        'plotly_template': 'plotly_dark'
-    }
+    """Manages dashboard theme (light mode only)."""
     
     LIGHT_THEME = {
-        'bg_color': '#ffffff',
-        'card_bg': '#f5f5f5',
-        'text_color': '#000000',
-        'secondary_text': '#666666',
-        'accent_color': '#1f77b4',
-        'success': '#28a745',
-        'warning': '#ffc107',
-        'error': '#dc3545',
-        'plotly_template': 'plotly_white'
+        'bg_color': '#F8FAFC',
+        'card_bg': '#FFFFFF',
+        'text_color': '#1E293B',
+        'secondary_text': '#64748B',
+        'accent_color': '#4F46E5',
+        'accent_light': '#818CF8',
+        'success': '#22C55E',
+        'warning': '#F59E0B',
+        'error': '#EF4444',
+        'border': '#E2E8F0',
+        'plotly_template': 'plotly_white',
+        'gradient_start': '#4F46E5',
+        'gradient_end': '#7C3AED'
     }
     
     @classmethod
-    def get_theme(cls, theme_name: str) -> Dict[str, str]:
-        """Get theme configuration by name."""
-        if theme_name.lower() == 'dark':
-            return cls.DARK_THEME
+    def get_theme(cls, theme_name: str = "light") -> Dict[str, str]:
+        """Get theme configuration (always returns light theme)."""
         return cls.LIGHT_THEME
     
     @classmethod
-    def apply_theme(cls, theme_name: str):
-        """Apply CSS styling based on theme."""
+    def apply_theme(cls, theme_name: str = "light"):
+        """Apply CSS styling for light mode with modern animations."""
         theme = cls.get_theme(theme_name)
         st.markdown(f"""
         <style>
+            /* ============================================ */
+            /* Global Styles */
+            /* ============================================ */
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            
             .stApp {{
-                background-color: {theme['bg_color']};
+                background: linear-gradient(135deg, {theme['bg_color']} 0%, #EEF2FF 100%);
+                font-family: 'Inter', sans-serif;
             }}
+            
+            /* ============================================ */
+            /* Header Animations */
+            /* ============================================ */
+            h1, h2, h3 {{
+                background: linear-gradient(135deg, {theme['gradient_start']} 0%, {theme['gradient_end']} 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                animation: fadeInDown 0.6s ease-out;
+            }}
+            
+            @keyframes fadeInDown {{
+                from {{
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }}
+                to {{
+                    opacity: 1;
+                    transform: translateY(0);
+                }}
+            }}
+            
+            /* ============================================ */
+            /* Card Styles */
+            /* ============================================ */
             .metric-card {{
-                background-color: {theme['card_bg']};
-                padding: 20px;
-                border-radius: 10px;
-                margin: 10px 0;
+                background: {theme['card_bg']};
+                padding: 24px;
+                border-radius: 16px;
+                margin: 12px 0;
+                border: 1px solid {theme['border']};
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                animation: slideInUp 0.5s ease-out;
             }}
+            
+            .metric-card:hover {{
+                transform: translateY(-4px);
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                border-color: {theme['accent_light']};
+            }}
+            
+            @keyframes slideInUp {{
+                from {{
+                    opacity: 0;
+                    transform: translateY(30px);
+                }}
+                to {{
+                    opacity: 1;
+                    transform: translateY(0);
+                }}
+            }}
+            
+            /* ============================================ */
+            /* Staggered Animation Classes */
+            /* ============================================ */
+            .stagger-1 {{ animation-delay: 0.1s; }}
+            .stagger-2 {{ animation-delay: 0.2s; }}
+            .stagger-3 {{ animation-delay: 0.3s; }}
+            .stagger-4 {{ animation-delay: 0.4s; }}
+            .stagger-5 {{ animation-delay: 0.5s; }}
+            
+            /* ============================================ */
+            /* Button Styles */
+            /* ============================================ */
+            .stButton > button {{
+                background: linear-gradient(135deg, {theme['accent_color']} 0%, {theme['gradient_end']} 100%);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                padding: 12px 24px;
+                font-weight: 600;
+                font-size: 14px;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.39);
+            }}
+            
+            .stButton > button:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px 0 rgba(79, 70, 229, 0.5);
+            }}
+            
+            .stButton > button:active {{
+                transform: translateY(0);
+            }}
+            
+            /* ============================================ */
+            /* Input Styles */
+            /* ============================================ */
+            .stSlider > div > div {{
+                background-color: {theme['accent_color']};
+            }}
+            
+            .stSelectbox > div > div {{
+                border-radius: 12px;
+                border: 2px solid {theme['border']};
+                transition: border-color 0.3s ease;
+            }}
+            
+            .stSelectbox > div > div:focus-within {{
+                border-color: {theme['accent_color']};
+            }}
+            
+            .stNumberInput > div > div > input {{
+                border-radius: 12px;
+                border: 2px solid {theme['border']};
+            }}
+            
+            .stNumberInput > div > div > input:focus {{
+                border-color: {theme['accent_color']};
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            }}
+            
+            /* ============================================ */
+            /* Sidebar Styles */
+            /* ============================================ */
+            [data-testid="stSidebar"] {{
+                background: linear-gradient(180deg, {theme['card_bg']} 0%, {theme['bg_color']} 100%);
+                border-right: 1px solid {theme['border']};
+            }}
+            
+            [data-testid="stSidebar"] .block-container {{
+                padding-top: 2rem;
+            }}
+            
+            /* ============================================ */
+            /* Metric Styles */
+            /* ============================================ */
+            [data-testid="stMetricValue"] {{
+                font-size: 2rem;
+                font-weight: 700;
+                color: {theme['text_color']};
+            }}
+            
+            [data-testid="stMetricLabel"] {{
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: {theme['secondary_text']};
+            }}
+            
+            [data-testid="stMetricDelta"] {{
+                font-size: 0.875rem;
+            }}
+            
+            /* ============================================ */
+            /* Expander Styles */
+            /* ============================================ */
+            .streamlit-expanderHeader {{
+                background-color: {theme['card_bg']};
+                border-radius: 12px;
+                border: 1px solid {theme['border']};
+                font-weight: 600;
+            }}
+            
+            .streamlit-expanderContent {{
+                background-color: {theme['card_bg']};
+                border-radius: 0 0 12px 12px;
+                border: 1px solid {theme['border']};
+                border-top: none;
+            }}
+            
+            /* ============================================ */
+            /* Table Styles */
+            /* ============================================ */
+            .dataframe {{
+                border-radius: 12px !important;
+                overflow: hidden;
+                border: 1px solid {theme['border']} !important;
+            }}
+            
+            .dataframe th {{
+                background: linear-gradient(135deg, {theme['accent_color']} 0%, {theme['gradient_end']} 100%) !important;
+                color: white !important;
+                font-weight: 600 !important;
+            }}
+            
+            .dataframe td {{
+                border-color: {theme['border']} !important;
+            }}
+            
+            .dataframe tr:hover td {{
+                background-color: {theme['bg_color']} !important;
+            }}
+            
+            /* ============================================ */
+            /* Status Colors */
+            /* ============================================ */
             .success-text {{
                 color: {theme['success']};
+                font-weight: 600;
             }}
+            
             .warning-text {{
                 color: {theme['warning']};
+                font-weight: 600;
             }}
+            
             .error-text {{
                 color: {theme['error']};
+                font-weight: 600;
             }}
+            
+            /* ============================================ */
+            /* Section Headers */
+            /* ============================================ */
             .section-header {{
                 color: {theme['accent_color']};
                 font-size: 1.5em;
-                font-weight: bold;
+                font-weight: 700;
                 margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 3px solid {theme['accent_color']};
+            }}
+            
+            /* ============================================ */
+            /* Progress Bar Animation */
+            /* ============================================ */
+            .stProgress > div > div > div {{
+                background: linear-gradient(90deg, {theme['accent_color']} 0%, {theme['gradient_end']} 50%, {theme['accent_color']} 100%);
+                background-size: 200% 100%;
+                animation: shimmer 2s infinite;
+            }}
+            
+            @keyframes shimmer {{
+                0% {{ background-position: 200% 0; }}
+                100% {{ background-position: -200% 0; }}
+            }}
+            
+            /* ============================================ */
+            /* Spinner Animation */
+            /* ============================================ */
+            .stSpinner > div {{
+                border-top-color: {theme['accent_color']} !important;
+            }}
+            
+            /* ============================================ */
+            /* Success/Info/Warning/Error Boxes */
+            /* ============================================ */
+            .stSuccess {{
+                background-color: rgba(34, 197, 94, 0.1);
+                border-left: 4px solid {theme['success']};
+                border-radius: 0 12px 12px 0;
+            }}
+            
+            .stInfo {{
+                background-color: rgba(79, 70, 229, 0.1);
+                border-left: 4px solid {theme['accent_color']};
+                border-radius: 0 12px 12px 0;
+            }}
+            
+            .stWarning {{
+                background-color: rgba(245, 158, 11, 0.1);
+                border-left: 4px solid {theme['warning']};
+                border-radius: 0 12px 12px 0;
+            }}
+            
+            .stError {{
+                background-color: rgba(239, 68, 68, 0.1);
+                border-left: 4px solid {theme['error']};
+                border-radius: 0 12px 12px 0;
+            }}
+            
+            /* ============================================ */
+            /* Tabs Styles */
+            /* ============================================ */
+            .stTabs [data-baseweb="tab-list"] {{
+                gap: 8px;
+                background-color: {theme['bg_color']};
+                border-radius: 12px;
+                padding: 4px;
+            }}
+            
+            .stTabs [data-baseweb="tab"] {{
+                border-radius: 8px;
+                padding: 10px 20px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }}
+            
+            .stTabs [aria-selected="true"] {{
+                background: linear-gradient(135deg, {theme['accent_color']} 0%, {theme['gradient_end']} 100%);
+                color: white;
+            }}
+            
+            /* ============================================ */
+            /* Pulse Animation for Important Elements */
+            /* ============================================ */
+            @keyframes pulse {{
+                0%, 100% {{
+                    opacity: 1;
+                }}
+                50% {{
+                    opacity: 0.6;
+                }}
+            }}
+            
+            .pulse {{
+                animation: pulse 2s infinite;
+            }}
+            
+            /* ============================================ */
+            /* Float Animation */
+            /* ============================================ */
+            @keyframes float {{
+                0%, 100% {{
+                    transform: translateY(0);
+                }}
+                50% {{
+                    transform: translateY(-10px);
+                }}
+            }}
+            
+            .float {{
+                animation: float 3s ease-in-out infinite;
+            }}
+            
+            /* ============================================ */
+            /* Radio Button Styles */
+            /* ============================================ */
+            .stRadio > div {{
+                gap: 12px;
+            }}
+            
+            .stRadio > div > label {{
+                background-color: {theme['card_bg']};
+                padding: 12px 20px;
+                border-radius: 10px;
+                border: 2px solid {theme['border']};
+                transition: all 0.3s ease;
+            }}
+            
+            .stRadio > div > label:hover {{
+                border-color: {theme['accent_light']};
+                background-color: rgba(79, 70, 229, 0.05);
+            }}
+            
+            /* ============================================ */
+            /* Code Block Styles */
+            /* ============================================ */
+            code {{
+                background-color: {theme['bg_color']};
+                padding: 2px 6px;
+                border-radius: 6px;
+                font-size: 0.875em;
+            }}
+            
+            pre {{
+                background-color: #1E293B !important;
+                border-radius: 12px !important;
+                padding: 16px !important;
+            }}
+            
+            /* ============================================ */
+            /* Enhanced Animations */
+            /* ============================================ */
+            
+            /* Bounce animation for notifications */
+            @keyframes bounce {{
+                0%, 20%, 50%, 80%, 100% {{
+                    transform: translateY(0);
+                }}
+                40% {{
+                    transform: translateY(-12px);
+                }}
+                60% {{
+                    transform: translateY(-6px);
+                }}
+            }}
+            
+            .bounce {{
+                animation: bounce 1s ease;
+            }}
+            
+            /* Scale in animation for charts */
+            @keyframes scaleIn {{
+                from {{
+                    opacity: 0;
+                    transform: scale(0.9);
+                }}
+                to {{
+                    opacity: 1;
+                    transform: scale(1);
+                }}
+            }}
+            
+            .scale-in {{
+                animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            }}
+            
+            /* Fade slide for sequential content */
+            @keyframes fadeSlideRight {{
+                from {{
+                    opacity: 0;
+                    transform: translateX(-20px);
+                }}
+                to {{
+                    opacity: 1;
+                    transform: translateX(0);
+                }}
+            }}
+            
+            .fade-slide-right {{
+                animation: fadeSlideRight 0.4s ease-out forwards;
+            }}
+            
+            /* Glow effect for active elements */
+            @keyframes glow {{
+                0%, 100% {{
+                    box-shadow: 0 0 5px rgba(79, 70, 229, 0.3);
+                }}
+                50% {{
+                    box-shadow: 0 0 20px rgba(79, 70, 229, 0.6);
+                }}
+            }}
+            
+            .glow {{
+                animation: glow 2s ease-in-out infinite;
+            }}
+            
+            /* Gradient text animation */
+            @keyframes gradientShift {{
+                0% {{
+                    background-position: 0% 50%;
+                }}
+                50% {{
+                    background-position: 100% 50%;
+                }}
+                100% {{
+                    background-position: 0% 50%;
+                }}
+            }}
+            
+            .gradient-text-animated {{
+                background: linear-gradient(270deg, {theme['gradient_start']}, {theme['gradient_end']}, #EC4899, {theme['gradient_start']});
+                background-size: 400% 400%;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation: gradientShift 8s ease infinite;
+            }}
+            
+            /* Result card reveal */
+            @keyframes revealUp {{
+                0% {{
+                    opacity: 0;
+                    transform: translateY(40px);
+                    filter: blur(10px);
+                }}
+                100% {{
+                    opacity: 1;
+                    transform: translateY(0);
+                    filter: blur(0);
+                }}
+            }}
+            
+            .reveal-up {{
+                animation: revealUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            }}
+            
+            /* Counter animation helper */
+            @keyframes countUp {{
+                from {{
+                    opacity: 0;
+                }}
+                to {{
+                    opacity: 1;
+                }}
+            }}
+            
+            /* Ripple effect on buttons */
+            .stButton > button {{
+                position: relative;
+                overflow: hidden;
+            }}
+            
+            .stButton > button::after {{
+                content: '';
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+                transform: scale(0);
+                opacity: 0;
+            }}
+            
+            .stButton > button:active::after {{
+                transform: scale(2);
+                opacity: 1;
+                transition: transform 0.3s, opacity 0.3s;
+            }}
+            
+            /* Smooth transitions for all interactive elements */
+            * {{
+                transition-property: background-color, border-color, color, box-shadow, transform;
+                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                transition-duration: 0.15s;
+            }}
+            
+            /* Chart container animation */
+            [data-testid="stPlotlyChart"] {{
+                animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            }}
+            
+            /* DataFrame animation */
+            [data-testid="stDataFrame"] {{
+                animation: fadeSlideRight 0.4s ease-out;
+            }}
+            
+            /* Loading shimmer effect */
+            @keyframes loadingShimmer {{
+                0% {{
+                    background-position: -200% 0;
+                }}
+                100% {{
+                    background-position: 200% 0;
+                }}
+            }}
+            
+            .loading-shimmer {{
+                background: linear-gradient(
+                    90deg,
+                    {theme['bg_color']} 25%,
+                    {theme['card_bg']} 50%,
+                    {theme['bg_color']} 75%
+                );
+                background-size: 200% 100%;
+                animation: loadingShimmer 1.5s infinite;
+            }}
+            
+            /* Tooltip styles */
+            [data-tooltip] {{
+                position: relative;
+            }}
+            
+            [data-tooltip]::before {{
+                content: attr(data-tooltip);
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%) translateY(-8px);
+                background: {theme['text_color']};
+                color: {theme['card_bg']};
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                white-space: nowrap;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s, transform 0.2s;
+            }}
+            
+            [data-tooltip]:hover::before {{
+                opacity: 1;
+                transform: translateX(-50%) translateY(-4px);
             }}
         </style>
         """, unsafe_allow_html=True)

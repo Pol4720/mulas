@@ -491,6 +491,101 @@ El algoritmo de Branch and Bound explora sistemáticamente el espacio de solucio
 
 La programación dinámica resuelve el problema de forma óptima para instancias pequeñas, construyendo soluciones incrementalmente usando memoización.
 
+\subsubsection{Esquema SRTBOT}
+
+Presentamos la formulación completa de nuestro algoritmo de programación dinámica utilizando el esquema SRTBOT (Subproblemas, Relación de recurrencia, Topología, Base, Original, Tiempo):
+
+\textbf{S - Subproblemas:}
+
+Definimos el subproblema $DP[j][mask]$ como la mejor solución (mínima diferencia entre valores máximo y mínimo) para asignar los ítems indicados por la máscara de bits $mask$ a los primeros $j$ contenedores, respetando las capacidades $C_1, \ldots, C_j$.
+
+Formalmente:
+\begin{itemize}
+    \item $mask \in \{0, 1, \ldots, 2^n - 1\}$: subconjunto de ítems asignados (representado como máscara de bits)
+    \item $j \in \{1, \ldots, k\}$: número de contenedores utilizados
+    \item $DP[j][mask] = (V_{max}, V_{min}, assignment)$ donde:
+    \begin{itemize}
+        \item $V_{max}$: valor máximo entre los $j$ contenedores
+        \item $V_{min}$: valor mínimo entre los $j$ contenedores
+        \item $assignment$: lista de máscaras indicando asignación por contenedor
+    \end{itemize}
+\end{itemize}
+
+Número de subproblemas: $O(k \cdot 2^n)$
+
+\textbf{R - Relación de Recurrencia:}
+
+Para cada subproblema $DP[j][mask]$, consideramos todos los subconjuntos $S$ de los ítems restantes que son factibles para el contenedor $j$:
+
+\[
+DP[j][mask \cup S] = \min_{\substack{S \subseteq remaining \\ S \in Factible(j)}} \left\{ \max\left(DP[j-1][mask].V_{max}, V(S)\right) - \min\left(DP[j-1][mask].V_{min}, V(S)\right) \right\}
+\]
+
+donde:
+\begin{itemize}
+    \item $remaining = (\text{full\_mask}) \oplus mask$: ítems aún no asignados
+    \item $Factible(j) = \{S : \sum_{i \in S} w_i \leq C_j\}$: subconjuntos que caben en contenedor $j$
+    \item $V(S) = \sum_{i \in S} v_i$: valor total del subconjunto $S$
+\end{itemize}
+
+\textbf{T - Topología (Orden de Resolución):}
+
+Los subproblemas se resuelven en el siguiente orden:
+\begin{enumerate}
+    \item Pre-computación: calcular $Factible(j)$ para cada $j \in \{1, \ldots, k\}$
+    \item Ordenar por número de contenedores: $j = 1, 2, \ldots, k$
+    \item Para cada $j$, iterar sobre máscaras $mask$ en orden creciente de cardinalidad (número de bits en 1)
+\end{enumerate}
+
+Este orden garantiza que cuando calculamos $DP[j][mask]$, ya tenemos calculados todos los valores $DP[j-1][mask']$ necesarios donde $mask' \subset mask$.
+
+\textbf{B - Casos Base:}
+
+\begin{itemize}
+    \item $DP[1][S] = (V(S), V(S), [S])$ para todo $S \in Factible(1)$
+    
+    Es decir, con un solo contenedor, la diferencia es 0 (solo hay un valor) y el estado almacena el valor del único contenedor.
+    
+    \item $DP[j][\emptyset] = (\infty, 0, [])$ representa el estado inicial sin ítems asignados (no válido para solución final)
+\end{itemize}
+
+\textbf{O - Problema Original:}
+
+El problema original corresponde a:
+\[
+DP[k][full\_mask]
+\]
+
+donde $full\_mask = 2^n - 1$ representa el conjunto de todos los ítems.
+
+El valor objetivo óptimo es:
+\[
+z^* = DP[k][full\_mask].V_{max} - DP[k][full\_mask].V_{min}
+\]
+
+\textbf{T - Tiempo de Ejecución:}
+
+\begin{itemize}
+    \item \textbf{Pre-computación de subconjuntos factibles:}
+    \[
+    O(k \cdot 2^n \cdot n)
+    \]
+    Para cada contenedor, evaluamos $2^n$ subconjuntos, y cada evaluación de peso/valor toma $O(n)$.
+    
+    \item \textbf{Llenado de tabla DP:}
+    
+    Para cada estado $(j, mask)$, debemos iterar sobre todos los subconjuntos de $remaining = full\_mask \oplus mask$. El número total de operaciones es:
+    \[
+    \sum_{mask} 2^{|remaining|} = \sum_{m=0}^{n} \binom{n}{m} \cdot 2^{n-m} = (1+2)^n = 3^n
+    \]
+    
+    Multiplicando por $k$ contenedores: $O(k \cdot 3^n)$
+    
+    \item \textbf{Espacio:} $O(k \cdot 2^n)$ para almacenar la tabla DP
+    
+    \item \textbf{Complejidad Total:} $O(k \cdot 3^n)$ tiempo, $O(k \cdot 2^n)$ espacio
+\end{itemize}
+
 \subsubsection{Enfoque con Capacidades Heterogéneas}
 
 Para el caso con capacidades individuales por contenedor, utilizamos un enfoque de DP basado en subconjuntos factibles por bin.

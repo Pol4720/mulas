@@ -183,36 +183,186 @@ Donde:
 \section{Análisis de Complejidad}
 %=============================================================================
 
-\subsection{NP-Hardness}
+\subsection{Clases de Complejidad y el Problema de Decisión}
 
-\begin{theorem}[NP-Hardness del Balanced Multi-Bin Packing]
-El problema de Balanced Multi-Bin Packing with Capacity Constraints es NP-hard.
+Antes de analizar la complejidad de nuestro problema, es fundamental distinguir entre problemas de optimización y problemas de decisión.
+
+\begin{definition}[Problema de Optimización vs. Decisión]
+\begin{itemize}
+    \item \textbf{Problema de Optimización (BALANCED-BIN-PACKING-OPT):} 
+    
+    Dados $n$ ítems con pesos y valores, $k$ bins con capacidades $C_1, \ldots, C_k$, encontrar una asignación factible que minimice la diferencia máxima de valores entre bins.
+    
+    \item \textbf{Problema de Decisión (BALANCED-BIN-PACKING-DEC):}
+    
+    Dados $n$ ítems con pesos y valores, $k$ bins con capacidades $C_1, \ldots, C_k$, y un umbral $B$, ¿existe una asignación factible tal que la diferencia máxima de valores entre bins sea $\leq B$?
+\end{itemize}
+\end{definition}
+
+\begin{proposition}
+Si el problema de decisión BALANCED-BIN-PACKING-DEC está en NP, entonces el problema de optimización BALANCED-BIN-PACKING-OPT está en NPO (problemas de optimización NP).
+\end{proposition}
+
+\subsection{NP-Completitud del Problema de Decisión}
+
+\begin{theorem}[NP-Completitud de BALANCED-BIN-PACKING-DEC]
+El problema de decisión BALANCED-BIN-PACKING-DEC es NP-completo.
 \end{theorem}
 
 \begin{proof}
-Demostraremos mediante reducción polinomial desde 3-PARTITION, un problema conocido por ser fuertemente NP-completo.
+Demostraremos que BALANCED-BIN-PACKING-DEC $\in$ NP-completo mediante dos pasos:
 
-\textbf{Definición de 3-PARTITION:}
-Dados enteros $a_1, a_2, \ldots, a_{3m}$ y un valor objetivo $B$ tal que $\sum_{i=1}^{3m} a_i = mB$ y $\frac{B}{4} < a_i < \frac{B}{2}$ para todo $i$, ¿existe una partición de los elementos en $m$ conjuntos $S_1, \ldots, S_m$ tal que cada conjunto tiene exactamente 3 elementos y $\sum_{j \in S_i} a_j = B$ para todo $i$?
+\textbf{Paso 1: BALANCED-BIN-PACKING-DEC $\in$ NP}
 
-\textbf{Construcción de la reducción:}
-Dado una instancia de 3-PARTITION, construimos una instancia de nuestro problema:
+Un certificado para una instancia con respuesta "sí" es una asignación $\sigma: I \rightarrow \{1, \ldots, k\}$. La verificación requiere:
+\begin{enumerate}
+    \item Verificar que cada ítem está asignado: $O(n)$
+    \item Calcular peso total de cada bin: $O(n)$
+    \item Verificar restricciones de capacidad: $O(k)$
+    \item Calcular valor total de cada bin: $O(n)$
+    \item Verificar que $\max_j V_j - \min_j V_j \leq B$: $O(k)$
+\end{enumerate}
+
+Total: $O(n + k)$, por lo tanto el certificado es verificable en tiempo polinomial. $\square$
+
+\textbf{Paso 2: NP-Hardness mediante reducción desde 3-PARTITION}
+
+\end{proof}
+
+\subsection{Cadena de Reducciones: De PARTITION a Nuestro Problema}
+
+Para comprender mejor la dureza del problema, presentamos la cadena de reducciones desde problemas fundamentales:
+
+\begin{center}
+\begin{tikzpicture}[node distance=2.5cm]
+\node (partition) [draw, rectangle] {PARTITION};
+\node (3partition) [draw, rectangle, below of=partition] {3-PARTITION};
+\node (binpacking) [draw, rectangle, below of=3partition] {BIN PACKING};
+\node (ourproblem) [draw, rectangle, below of=binpacking] {BALANCED-BIN-PACKING};
+
+\draw[->] (partition) -- (3partition) node[midway, right] {$\leq_p$};
+\draw[->] (3partition) -- (binpacking) node[midway, right] {$\leq_p$};
+\draw[->] (binpacking) -- (ourproblem) node[midway, right] {$\leq_p$};
+\end{tikzpicture}
+\end{center}
+
+\subsubsection{Problema PARTITION (Punto de Partida)}
+
+\begin{definition}[PARTITION]
+\textbf{Entrada:} Conjunto $S = \{a_1, a_2, \ldots, a_n\}$ de enteros positivos.
+
+\textbf{Pregunta:} ¿Existe un subconjunto $S' \subseteq S$ tal que $\sum_{a_i \in S'} a_i = \sum_{a_i \in S \setminus S'} a_i = \frac{1}{2}\sum_{a_i \in S} a_i$?
+\end{definition}
+
+PARTITION es uno de los 21 problemas originales de Karp (1972) demostrados NP-completos.
+
+\subsubsection{Reducción 1: PARTITION $\leq_p$ 3-PARTITION}
+
+\begin{definition}[3-PARTITION]
+\textbf{Entrada:} Conjunto $A = \{a_1, a_2, \ldots, a_{3m}\}$ de $3m$ enteros positivos y un entero $B$ tal que:
 \begin{itemize}
-    \item Para cada elemento $a_i$, creamos un ítem con $w_i = v_i = a_i$
-    \item Establecemos $k = m$ contenedores
-    \item Establecemos capacidad $C_j = B$ para todo $j \in \{1, \ldots, k\}$ (capacidades uniformes)
+    \item $\sum_{i=1}^{3m} a_i = mB$
+    \item $\frac{B}{4} < a_i < \frac{B}{2}$ para todo $i$
 \end{itemize}
 
-\textbf{Nota:} La reducción utiliza capacidades uniformes, pero el problema con capacidades heterogéneas es al menos tan difícil, ya que generaliza el caso uniforme.
+\textbf{Pregunta:} ¿Se puede particionar $A$ en $m$ conjuntos disjuntos $A_1, \ldots, A_m$ tal que cada $A_i$ contiene exactamente 3 elementos y $\sum_{a \in A_i} a = B$?
+\end{definition}
 
-\textbf{Correctitud:}
-\begin{itemize}
-    \item Si existe una 3-partición válida, podemos asignar los ítems correspondientes a cada contenedor. El valor total de cada contenedor será exactamente $B$, por lo que el objetivo (diferencia máxima de valores) será 0.
+\textbf{Importancia:} 3-PARTITION es \textit{fuertemente NP-completo}, lo que significa que permanece NP-completo incluso si los números se representan en unario (Garey \& Johnson, 1979).
+
+\subsubsection{Reducción 2: 3-PARTITION $\leq_p$ BALANCED-BIN-PACKING}
+
+\begin{lemma}[Reducción desde 3-PARTITION]
+3-PARTITION se reduce polinomialmente a BALANCED-BIN-PACKING-DEC.
+\end{lemma}
+
+\begin{proof}
+Dada una instancia de 3-PARTITION con elementos $\{a_1, \ldots, a_{3m}\}$ y objetivo $B$, construimos una instancia de BALANCED-BIN-PACKING-DEC:
+
+\textbf{Construcción:}
+\begin{enumerate}
+    \item Para cada elemento $a_i$, creamos un ítem con:
+    \begin{itemize}
+        \item Peso: $w_i = a_i$
+        \item Valor: $v_i = a_i$ (peso y valor coinciden)
+    \end{itemize}
     
-    \item Si obtenemos una solución con objetivo 0, significa que todos los contenedores tienen el mismo valor total. Dado que la suma total es $mB$, cada contenedor debe tener valor $B$. Las restricciones $\frac{B}{4} < a_i < \frac{B}{2}$ garantizan que cada contenedor debe tener exactamente 3 ítems, constituyendo una 3-partición válida.
+    \item Número de bins: $k = m$
+    
+    \item Capacidad de cada bin: $C_j = B$ para $j = 1, \ldots, m$ (capacidades uniformes)
+    
+    \item Umbral de balance: $\beta = 0$ (buscamos balance perfecto)
+\end{enumerate}
+
+\textbf{Correctitud ($\Rightarrow$):}
+
+Supongamos que existe una 3-partición válida $A_1, \ldots, A_m$ de los elementos originales.
+
+Construimos una asignación $\sigma$ para BALANCED-BIN-PACKING:
+\begin{itemize}
+    \item Para cada conjunto $A_j$ en la 3-partición, asignamos los ítems correspondientes al bin $j$
+    \item Cada bin $j$ contiene exactamente 3 ítems con peso total $B$
+    \item Por construcción ($v_i = w_i$), el valor total de cada bin es también $B$
+    \item La diferencia máxima de valores es: $\max_j V_j - \min_j V_j = B - B = 0 \leq \beta$
 \end{itemize}
 
-La reducción es polinomial ya que solo involucra copiar valores.
+Por lo tanto, la asignación es factible y satisface el umbral de balance.
+
+\textbf{Correctitud ($\Leftarrow$):}
+
+Supongamos que existe una asignación factible $\sigma$ para BALANCED-BIN-PACKING con diferencia $\leq 0$.
+
+Esto implica que todos los bins tienen el mismo valor total. Como:
+\begin{itemize}
+    \item Suma total de valores: $\sum_{i=1}^{3m} v_i = \sum_{i=1}^{3m} a_i = mB$
+    \item Número de bins: $k = m$
+    \item Todos los bins tienen igual valor
+\end{itemize}
+
+Cada bin debe tener valor exactamente $\frac{mB}{m} = B$.
+
+Dado que $v_i = w_i$ y el bin tiene capacidad $B$, cada bin también tiene peso total $B$ (está completamente lleno).
+
+Las restricciones $\frac{B}{4} < a_i < \frac{B}{2}$ garantizan que:
+\begin{itemize}
+    \item Ningún bin puede tener menos de 3 elementos (ya que $3 \times \frac{B}{4} > \frac{3B}{4}$ pero necesitamos llegar a $B$)
+    \item Ningún bin puede tener más de 3 elementos (ya que $4 \times \frac{B}{4} = B$ pero cada elemento es $> \frac{B}{4}$)
+\end{itemize}
+
+Por lo tanto, cada bin contiene exactamente 3 elementos que suman $B$, constituyendo una 3-partición válida. $\square$
+\end{proof}
+
+\subsection{Implicaciones de la NP-Completitud}
+
+\begin{corollary}
+El problema de optimización BALANCED-BIN-PACKING-OPT es NP-hard.
+\end{corollary}
+
+\begin{proof}
+Si existiera un algoritmo polinomial para BALANCED-BIN-PACKING-OPT, podríamos resolver BALANCED-BIN-PACKING-DEC en tiempo polinomial:
+\begin{enumerate}
+    \item Ejecutar el algoritmo de optimización
+    \item Comparar el resultado con $B$
+    \item Responder "sí" si resultado $\leq B$, "no" en caso contrario
+\end{enumerate}
+
+Como BALANCED-BIN-PACKING-DEC es NP-completo, esto implicaría P = NP. $\square$
+\end{proof}
+
+\begin{corollary}[Inaproximabilidad]
+Bajo la hipótesis P $\neq$ NP, no existe un esquema de aproximación en tiempo polinomial (PTAS) para BALANCED-BIN-PACKING a menos que se cumplan condiciones adicionales sobre la estructura de las instancias.
+\end{corollary}
+
+\subsection{Problema con Capacidades Heterogéneas}
+
+\begin{proposition}
+El problema BALANCED-BIN-PACKING con capacidades heterogéneas (diferentes $C_j$ por bin) es al menos tan difícil como el caso con capacidades uniformes.
+\end{proposition}
+
+\begin{proof}
+El caso uniforme es una instancia particular del caso heterogéneo (cuando $C_1 = C_2 = \cdots = C_k$). 
+
+Si existiera un algoritmo polinomial para el caso heterogéneo, también resolvería el caso uniforme en tiempo polinomial, lo cual contradice la NP-hardness del caso uniforme (asumiendo P $\neq$ NP). $\square$
 \end{proof}
 
 \subsection{Complejidad de los Algoritmos Implementados}
@@ -337,6 +487,94 @@ El algoritmo de Branch and Bound explora sistemáticamente el espacio de solucio
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+
+\subsection{Programación Dinámica}
+
+La programación dinámica resuelve el problema de forma óptima para instancias pequeñas, construyendo soluciones incrementalmente usando memoización.
+
+\subsubsection{Enfoque con Capacidades Heterogéneas}
+
+Para el caso con capacidades individuales por contenedor, utilizamos un enfoque de DP basado en subconjuntos factibles por bin.
+
+\textbf{Idea Principal:}
+\begin{enumerate}
+    \item Pre-computar todos los subconjuntos factibles de ítems para cada contenedor
+    \item Usar DP para encontrar la mejor k-partición de ítems
+    \item Estado: $DP[j][mask]$ = mejor solución usando $j$ bins y asignando ítems en $mask$
+\end{enumerate}
+
+\begin{algorithm}[H]
+\caption{Programación Dinámica para Multi-Bin Balancing}
+\begin{algorithmic}[1]
+\Procedure{DynamicProgramming}{$items, k, C_1, \ldots, C_k$}
+    \State $n \gets |items|$
+    \State $feasible[j] \gets \{\}$ para $j = 1, \ldots, k$
+    
+    \Comment{Pre-computar subconjuntos factibles para cada bin}
+    \For{$j \gets 1$ \textbf{to} $k$}
+        \For{$mask \gets 0$ \textbf{to} $2^n - 1$}
+            \State $total\_weight \gets 0, total\_value \gets 0$
+            \For{$i \gets 0$ \textbf{to} $n-1$}
+                \If{$mask \& (1 << i)$}
+                    \State $total\_weight \gets total\_weight + items[i].weight$
+                    \State $total\_value \gets total\_value + items[i].value$
+                \EndIf
+            \EndFor
+            \If{$total\_weight \leq C_j$}
+                \State $feasible[j][mask] \gets (total\_weight, total\_value)$
+            \EndIf
+        \EndFor
+    \EndFor
+    
+    \Comment{DP: $dp[j][mask]$ = (max\_val, min\_val, assignment)}
+    \State $dp[1] \gets \{\}$
+    \For{$mask \in feasible[1]$}
+        \State $v \gets feasible[1][mask].value$
+        \State $dp[1][mask] \gets (v, v, [mask])$
+    \EndFor
+    
+    \Comment{Llenar tabla DP}
+    \For{$j \gets 2$ \textbf{to} $k$}
+        \State $dp[j] \gets \{\}$
+        \For{$prev\_mask \in dp[j-1]$}
+            \State $(prev\_max, prev\_min, prev\_assign) \gets dp[j-1][prev\_mask]$
+            \State $remaining \gets \text{full\_mask} \oplus prev\_mask$
+            
+            \For{$subset \in \text{subsets}(remaining) \cap feasible[j]$}
+                \State $new\_mask \gets prev\_mask \mid subset$
+                \State $new\_value \gets feasible[j][subset].value$
+                \State $new\_max \gets \max(prev\_max, new\_value)$
+                \State $new\_min \gets \min(prev\_min, new\_value)$
+                \State $new\_diff \gets new\_max - new\_min$
+                
+                \If{$new\_mask \notin dp[j]$ \textbf{or} $new\_diff < dp[j][new\_mask].diff$}
+                    \State $dp[j][new\_mask] \gets (new\_max, new\_min, prev\_assign + [subset])$
+                \EndIf
+            \EndFor
+        \EndFor
+    \EndFor
+    
+    \State $full\_mask \gets 2^n - 1$
+    \State \Return $dp[k][full\_mask].assignment$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Complejidad:}
+\begin{itemize}
+    \item Pre-computación: $O(k \cdot 2^n \cdot n)$
+    \item DP principal: $O(k \cdot 3^n)$ (iterar sobre particiones)
+    \item Espacio: $O(k \cdot 2^n)$
+\end{itemize}
+
+La complejidad $O(3^n)$ surge del hecho de que para cada máscara, debemos iterar sobre todos sus subconjuntos, lo cual es $\sum_{|S|=m} \binom{n}{m} 2^m = 3^n$ por el teorema del binomio.
+
+\textbf{Optimizaciones Implementadas:}
+\begin{enumerate}
+    \item Poda de estados dominados
+    \item Límite en el tamaño de instancia ($n \leq 20$)
+    \item Fallback a algoritmo greedy para instancias grandes
+\end{enumerate}
 
 \subsection{Metaheurísticas}
 

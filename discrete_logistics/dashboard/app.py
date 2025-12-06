@@ -429,7 +429,8 @@ def render_theory_page():
     
     tabs = st.tabs([
         "📐 Formalización",
-        "🔢 Complejidad", 
+        "🔢 Complejidad NP", 
+        "🔗 Reducciones",
         "📝 Algoritmos",
         "📖 Referencias"
     ])
@@ -451,7 +452,7 @@ def render_theory_page():
         - $x_{ij} \\in \\{0, 1\\}$: 1 si el ítem $i$ es asignado al contenedor $j$
         - $z$: makespan (valor total máximo en cualquier contenedor)
         
-        ### Formulación ILP
+        ### Formulación ILP (Programación Lineal Entera)
         
         $$\\min z$$
         
@@ -464,86 +465,283 @@ def render_theory_page():
         $$\\sum_{i=1}^{n} v_i \\cdot x_{ij} \\leq z \\quad \\forall j = 1,...,k$$
         
         $$x_{ij} \\in \\{0, 1\\}, z \\geq 0$$
+        
+        ### Problema de Optimización vs. Decisión
+        
+        - **Optimización (BALANCED-BIN-PACKING-OPT):** Minimizar la diferencia máxima de valores
+        - **Decisión (BALANCED-BIN-PACKING-DEC):** ¿Existe asignación con diferencia ≤ B?
+        
+        El problema de decisión es **NP-completo**, lo que implica que el problema de optimización es **NP-hard**.
         """)
     
     with tabs[1]:
         st.markdown("""
-        ## Análisis de Complejidad
+        ## Análisis de Complejidad Computacional
         
-        ### Demostración de NP-Dureza
+        ### NP-Completitud del Problema de Decisión
         
-        El Problema de Empaquetado Multi-Contenedor Balanceado es **NP-difícil**.
+        **Teorema:** BALANCED-BIN-PACKING-DEC ∈ NP-completo
         
-        **Demostración:** Por reducción desde 3-PARTITION.
+        **Demostración (esquema):**
         
-        Dada una instancia de 3-PARTITION con enteros $a_1, ..., a_{3m}$ 
-        y objetivo $B = \\frac{1}{m}\\sum a_i$, construimos una instancia:
+        #### Parte 1: BALANCED-BIN-PACKING-DEC ∈ NP
         
-        1. Crear ítem $i$ con peso $w_i = v_i = a_i$
-        2. Establecer $k = m$ contenedores con capacidad $C = B$
+        **Certificado:** Una asignación σ: I → {1,...,k}
         
-        Existe una 3-PARTITION válida si y solo si podemos alcanzar
-        valor objetivo 0 (balance perfecto).
+        **Verificación en tiempo polinomial:**
+        1. Verificar asignación completa: O(n)
+        2. Calcular pesos por bin: O(n)
+        3. Verificar capacidades: O(k)
+        4. Calcular valores por bin: O(n)
+        5. Verificar diferencia ≤ B: O(k)
         
-        ### Complejidades de Algoritmos
+        **Total:** O(n + k) → Polinomial ✓
         
-        | Algoritmo | Tiempo | Espacio |
-        |-----------|--------|---------|
-        | FFD | $O(n \\log n)$ | $O(n)$ |
-        | BFD | $O(n^2)$ | $O(n)$ |
-        | Recocido Simulado | $O(I \\cdot n)$ | $O(n)$ |
-        | Algoritmo Genético | $O(G \\cdot P \\cdot n)$ | $O(P \\cdot n)$ |
-        | Branch & Bound | $O(k^n)$ peor caso | $O(n)$ |
+        #### Parte 2: NP-Hardness
+        
+        Se demuestra mediante reducción desde **3-PARTITION**, un problema fuertemente NP-completo.
+        
+        ### Clases de Complejidad Relevantes
+        
+        | Clase | Descripción | Nuestro Problema |
+        |-------|-------------|------------------|
+        | P | Resoluble en tiempo polinomial | ❌ (asumiendo P ≠ NP) |
+        | NP | Verificable en tiempo polinomial | ✅ (versión decisión) |
+        | NP-completo | Más difícil en NP | ✅ (versión decisión) |
+        | NP-hard | Al menos tan difícil como NP-completo | ✅ (versión optimización) |
+        
+        ### Implicaciones Prácticas
+        
+        1. **No existe algoritmo exacto eficiente** (asumiendo P ≠ NP)
+        2. **Necesidad de aproximaciones** y heurísticas
+        3. **Inaproximabilidad:** No existe PTAS general
+        4. **Instancias grandes:** Requieren métodos aproximados
         """)
     
     with tabs[2]:
         st.markdown("""
-        ## Descripción de Algoritmos
+        ## Cadena de Reducciones
         
-        ### Algoritmos Voraces
+        ### De PARTITION a Nuestro Problema
         
-        **First Fit Decreasing (FFD):**
-        1. Ordenar ítems por peso (descendente)
-        2. Para cada ítem, colocar en primer contenedor que quepa
-        3. Complejidad: $O(n \\log n)$
+        ```
+        PARTITION (Karp 1972, NP-completo)
+             ↓ reducción polinomial
+        3-PARTITION (Fuertemente NP-completo)
+             ↓ reducción polinomial
+        BIN PACKING CLÁSICO
+             ↓ generalización
+        BALANCED-BIN-PACKING ← Nuestro problema
+        ```
         
-        **Best Fit Decreasing (BFD):**
-        1. Ordenar ítems por peso (descendente)
-        2. Para cada ítem, colocar en contenedor con mínimo espacio restante
-        3. Proporciona empaquetado más compacto
+        ### Problema 3-PARTITION
         
-        ### Metaheurísticas
+        **Entrada:** 
+        - Conjunto A = {a₁, a₂, ..., a₃ₘ} de 3m enteros
+        - Valor objetivo B tal que Σaᵢ = mB
+        - Restricción: B/4 < aᵢ < B/2 para todo i
         
-        **Recocido Simulado:**
-        - Búsqueda local probabilística
-        - Acepta peores soluciones con probabilidad $e^{-\\Delta/T}$
-        - La temperatura decrece con el tiempo (esquema de enfriamiento)
+        **Pregunta:** ¿Se puede particionar A en m subconjuntos de 3 elementos cada uno, donde cada subconjunto suma exactamente B?
         
-        **Algoritmo Genético:**
-        - Enfoque evolutivo basado en población
-        - Usa operadores de selección, cruce y mutación
-        - Explora espacio de soluciones diverso
+        **Importancia:** 3-PARTITION es **fuertemente NP-completo**:
+        - Permanece NP-completo incluso con representación unaria
+        - No tiene pseudo-polinomial (a diferencia de KNAPSACK)
+        
+        ### Reducción: 3-PARTITION ≤ₚ BALANCED-BIN-PACKING
+        
+        **Construcción:**
+        
+        Dada instancia de 3-PARTITION con {a₁,...,a₃ₘ} y objetivo B:
+        
+        1. **Crear ítems:** Para cada aᵢ → Item(peso=aᵢ, valor=aᵢ)
+        2. **Número de bins:** k = m
+        3. **Capacidades:** Cⱼ = B para todo j (uniforme)
+        4. **Umbral:** β = 0 (balance perfecto)
+        
+        **Correctitud (⇒):**
+        - Si existe 3-partición válida → todos los bins tienen valor B
+        - Diferencia máxima = B - B = 0 ≤ β ✓
+        
+        **Correctitud (⇐):**
+        - Si diferencia = 0 → todos bins tienen igual valor
+        - Como Σvᵢ = mB y k = m → cada bin tiene valor B
+        - Restricciones B/4 < aᵢ < B/2 → exactamente 3 elementos por bin
+        - Esto constituye una 3-partición válida ✓
+        
+        ### Consecuencias
+        
+        **Corolario 1:** BALANCED-BIN-PACKING-OPT es NP-hard
+        
+        *Prueba:* Si existiera algoritmo polinomial para optimización, resolvería decisión en tiempo polinomial → P = NP.
+        
+        **Corolario 2:** Capacidades heterogéneas son ≥ difíciles que uniformes
+        
+        *Prueba:* Caso uniforme es instancia particular del heterogéneo.
         """)
     
     with tabs[3]:
         st.markdown("""
-        ## Referencias
+        ## Descripción de Algoritmos
         
-        1. Garey, M.R., & Johnson, D.S. (1979). *Computers and Intractability: 
+        ### Algoritmos Voraces (Greedy)
+        
+        **First Fit Decreasing (FFD):**
+        1. Ordenar ítems por peso (descendente)
+        2. Para cada ítem, colocar en primer contenedor con espacio
+        3. Complejidad: O(n log n)
+        4. Aproximación: Sin garantía para objetivo de balance
+        
+        **Best Fit Decreasing (BFD):**
+        1. Ordenar ítems por peso (descendente)
+        2. Para cada ítem, elegir bin con mínimo espacio restante que quepa
+        3. Proporciona empaquetado más compacto
+        4. Complejidad: O(n²)
+        
+        **Worst Fit Decreasing (WFD):**
+        1. Ordenar ítems por peso (descendente)
+        2. Para cada ítem, elegir bin con máximo espacio restante
+        3. Favorece el balance (distribuye carga)
+        4. Complejidad: O(n log n)
+        
+        ### Programación Dinámica
+        
+        **Enfoque:** Construcción óptima de k-particiones
+        
+        **Estado:** DP[j][mask] = mejor solución con j bins asignando ítems en mask
+        
+        **Transición:**
+        ```
+        Para cada bin j:
+            Para cada subconjunto S factible en bin j:
+                DP[j][mask ∪ S] = mejor de:
+                    - DP[j][mask ∪ S] actual
+                    - DP[j-1][mask] + S en bin j
+        ```
+        
+        **Complejidad:**
+        - Tiempo: O(k · 3ⁿ) [iterar particiones]
+        - Espacio: O(k · 2ⁿ)
+        - Práctico: n ≤ 20
+        
+        **Optimización:** Pre-computar subconjuntos factibles por bin (capacidades heterogéneas)
+        
+        ### Branch and Bound
+        
+        **Estrategia:** Exploración sistemática con poda
+        
+        **Componentes:**
+        1. **Branching:** Asignar ítem i a cada bin j posible
+        2. **Bounding:** Calcular cota inferior del objetivo
+        3. **Pruning:** Descartar ramas con cota ≥ mejor solución
+        
+        **Cotas Utilizadas:**
+        - Cota trivial: diferencia actual
+        - Cota optimista: distribuir valor restante uniformemente
+        - Cota por relajación lineal
+        
+        **Complejidad:**
+        - Peor caso: O(kⁿ)
+        - Mejor caso: Poda extensiva reduce búsqueda
+        - Práctico: n ≤ 25 con buenas cotas
+        
+        ### Metaheurísticas
+        
+        **Recocido Simulado (Simulated Annealing):**
+        - Búsqueda local probabilística
+        - Acepta soluciones peores con probabilidad e^(-Δ/T)
+        - Temperatura T decrece (cooling schedule)
+        - Escapa de óptimos locales
+        
+        **Algoritmo Genético:**
+        - Población de soluciones evoluciona
+        - Operadores: selección, cruce, mutación
+        - Explora espacio de soluciones diverso
+        - Balance exploración/explotación
+        
+        **Búsqueda Tabú:**
+        - Búsqueda local con memoria
+        - Lista tabú evita ciclos
+        - Intensificación y diversificación
+        - Memoria a corto y largo plazo
+        
+        ### Complejidades Comparadas
+        
+        | Algoritmo | Tiempo | Espacio | Optimalidad |
+        |-----------|--------|---------|-------------|
+        | FFD | O(n log n) | O(n) | No garantizada |
+        | BFD | O(n²) | O(n) | No garantizada |
+        | DP | O(k·3ⁿ) | O(k·2ⁿ) | **Óptima** |
+        | B&B | O(kⁿ) peor | O(n) | **Óptima** |
+        | SA | O(I·n) | O(n) | Aproximación |
+        | GA | O(G·P·n) | O(P·n) | Aproximación |
+        
+        *Donde: I=iteraciones, G=generaciones, P=población*
+        """)
+    
+    with tabs[4]:
+        st.markdown("""
+        ## Referencias Fundamentales
+        
+        ### Complejidad Computacional
+        
+        1. **Garey, M.R., & Johnson, D.S. (1979).** *Computers and Intractability: 
            A Guide to the Theory of NP-Completeness*. W.H. Freeman.
+           - Teoría fundamental de NP-completitud
+           - Demostración de 3-PARTITION como NP-completo
         
-        2. Martello, S., & Toth, P. (1990). *Knapsack Problems: Algorithms 
+        2. **Karp, R.M. (1972).** "Reducibility among combinatorial problems." 
+           *Complexity of Computer Computations*, 85-103.
+           - 21 problemas NP-completos originales
+           - Incluye PARTITION
+        
+        ### Bin Packing
+        
+        3. **Martello, S., & Toth, P. (1990).** *Knapsack Problems: Algorithms 
            and Computer Implementations*. Wiley.
+           - Algoritmos exactos y aproximados
+           - Programación dinámica avanzada
         
-        3. Coffman, E.G., Garey, M.R., & Johnson, D.S. (1996). 
+        4. **Coffman, E.G., Garey, M.R., & Johnson, D.S. (1996).** 
            "Approximation algorithms for bin packing: A survey." 
            *Approximation Algorithms for NP-hard Problems*, 46-93.
+           - Estado del arte en aproximación
+           - Análisis de FFD, BFD, etc.
         
-        4. Kirkpatrick, S., Gelatt, C.D., & Vecchi, M.P. (1983). 
+        5. **Graham, R.L. (1969).** "Bounds on multiprocessing timing anomalies." 
+           *SIAM Journal on Applied Mathematics*, 17(2), 416-429.
+           - Algoritmo LPT para scheduling
+           - Análisis de aproximación
+        
+        ### Metaheurísticas
+        
+        6. **Kirkpatrick, S., Gelatt, C.D., & Vecchi, M.P. (1983).** 
            "Optimization by simulated annealing." *Science*, 220(4598), 671-680.
+           - Introducción del Simulated Annealing
+           - Fundamento termodinámico
         
-        5. Glover, F. (1986). "Future paths for integer programming and 
-           links to artificial intelligence." *Computers & Operations Research*.
+        7. **Goldberg, D.E. (1989).** *Genetic Algorithms in Search, Optimization 
+           and Machine Learning*. Addison-Wesley.
+           - Algoritmos genéticos fundamentales
+           - Teoría de schemas
+        
+        8. **Glover, F. (1986).** "Future paths for integer programming and 
+           links to artificial intelligence." *Computers & Operations Research*, 13(5), 533-549.
+           - Introducción de Búsqueda Tabú
+           - Estrategias de memoria
+        
+        ### Artículos Recientes
+        
+        9. **Delorme, M., Iori, M., & Martello, S. (2016).** 
+           "Bin packing and cutting stock problems: Mathematical models and exact algorithms." 
+           *European Journal of Operational Research*, 255(1), 1-20.
+           - Survey moderno de bin packing
+           - Modelos ILP avanzados
+        
+        10. **Baldi, M.M., Crainic, T.G., Perboli, G., & Tadei, R. (2012).**
+            "The generalized bin packing problem."
+            *Transportation Research Part E*, 48(6), 1205-1220.
+            - Generalizaciones del problema
+            - Aplicaciones logísticas
         """)
 
 

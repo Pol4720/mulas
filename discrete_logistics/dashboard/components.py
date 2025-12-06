@@ -583,10 +583,10 @@ class ResultsDisplay:
     
     def render_results(self, results: Dict[str, Any]):
         """Display results from algorithm execution."""
-        st.markdown("### 📈 Results")
+        st.markdown("### 📈 Resultados")
         
         if not results:
-            st.info("No results to display. Run algorithms first.")
+            st.info("No hay resultados para mostrar. Ejecute los algoritmos primero.")
             return
         
         # Summary metrics
@@ -607,53 +607,53 @@ class ResultsDisplay:
         
         with col1:
             st.metric(
-                "Best Algorithm",
+                "Mejor Algoritmo",
                 best_algo,
-                help="Algorithm with lowest objective value"
+                help="Algoritmo con menor valor objetivo"
             )
         
         with col2:
             st.metric(
-                "Best Objective",
+                "Mejor Objetivo",
                 f"{best_result.get('objective', 0):.4f}",
-                help="Minimum value difference achieved"
+                help="Mínima diferencia de valor alcanzada"
             )
         
         with col3:
             st.metric(
-                "Execution Time",
+                "Tiempo de Ejecución",
                 f"{best_result.get('time', 0):.3f}s",
-                help="Time to find best solution"
+                help="Tiempo para encontrar la mejor solución"
             )
     
     def _render_comparison_table(self, results: Dict[str, Any]):
         """Render comparison table of all algorithms."""
-        st.markdown("#### Algorithm Comparison")
+        st.markdown("#### Comparación de Algoritmos")
         
         data = []
         for algo_name, result in results.items():
             data.append({
-                'Algorithm': algo_name,
-                'Objective': result.get('objective', '-'),
-                'Balance Score': result.get('balance_score', '-'),
-                'Time (s)': result.get('time', '-'),
-                'Feasible': '✅' if result.get('feasible', False) else '❌'
+                'Algoritmo': algo_name,
+                'Objetivo': result.get('objective', '-'),
+                'Puntuación Balance': result.get('balance_score', '-'),
+                'Tiempo (s)': result.get('time', '-'),
+                'Factible': '✅' if result.get('feasible', False) else '❌'
             })
         
         df = pd.DataFrame(data)
-        df = df.sort_values('Objective')
+        df = df.sort_values('Objetivo')
         
         st.dataframe(df, use_container_width=True, hide_index=True)
     
     def _render_best_solution(self, results: Dict[str, Any]):
         """Visualize the best solution found."""
-        st.markdown("#### Best Solution Visualization")
+        st.markdown("#### Visualización de la Mejor Solución")
         
         best_algo = min(results.keys(), key=lambda x: results[x].get('objective', float('inf')))
         solution = results[best_algo].get('solution')
         
         if solution is None:
-            st.warning("No solution available for visualization.")
+            st.warning("No hay solución disponible para visualizar.")
             return
         
         # Create bin visualization
@@ -664,7 +664,7 @@ class ResultsDisplay:
         """Create a visual representation of bin contents."""
         fig = make_subplots(
             rows=1, cols=len(solution.bins),
-            subplot_titles=[f"Bin {i+1}" for i in range(len(solution.bins))]
+            subplot_titles=[f"Cont. {i+1}" for i in range(len(solution.bins))]
         )
         
         colors = px.colors.qualitative.Set3
@@ -697,7 +697,7 @@ class ResultsDisplay:
             )
         
         fig.update_layout(
-            title="Bin Contents (Weight Distribution)",
+            title="Contenido de Contenedores (Distribución de Peso)",
             template=self.theme['plotly_template'],
             height=400,
             showlegend=False,
@@ -717,7 +717,7 @@ class VisualizationPanel:
     
     def render_convergence_plot(self, history: Dict[str, List[float]]):
         """Render convergence plot for iterative algorithms."""
-        st.markdown("#### Convergence Analysis")
+        st.markdown("#### Análisis de Convergencia")
         
         fig = go.Figure()
         
@@ -730,9 +730,9 @@ class VisualizationPanel:
             ))
         
         fig.update_layout(
-            title="Algorithm Convergence",
-            xaxis_title="Iteration",
-            yaxis_title="Objective Value",
+            title="Convergencia de Algoritmos",
+            xaxis_title="Iteración",
+            yaxis_title="Valor Objetivo",
             template=self.theme['plotly_template'],
             height=400
         )
@@ -741,9 +741,9 @@ class VisualizationPanel:
     
     def render_performance_radar(self, results: Dict[str, Any]):
         """Render radar chart comparing algorithm performance."""
-        st.markdown("#### Performance Comparison")
+        st.markdown("#### Comparación de Rendimiento")
         
-        metrics = ['Speed', 'Quality', 'Balance', 'Feasibility', 'Stability']
+        metrics = ['Velocidad', 'Calidad', 'Balance', 'Factibilidad', 'Estabilidad']
         
         fig = go.Figure()
         

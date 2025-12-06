@@ -15,7 +15,7 @@ from typing import Dict, Any, Optional
 
 # Page configuration - must be first Streamlit command
 st.set_page_config(
-    page_title="Balanced Multi-Bin Packing",
+    page_title="Empaquetado Multi-Contenedor Balanceado",
     page_icon="📦",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -26,7 +26,13 @@ import sys
 from pathlib import Path
 
 # Add package root to path for absolute imports
-_pkg_root = Path(__file__).parent.parent
+_dashboard_dir = Path(__file__).parent  # dashboard folder
+_pkg_root = _dashboard_dir.parent       # discrete_logistics folder
+_workspace_root = _pkg_root.parent      # mulas folder
+
+# Insert in reverse order of priority
+if str(_workspace_root) not in sys.path:
+    sys.path.insert(0, str(_workspace_root))
 if str(_pkg_root) not in sys.path:
     sys.path.insert(0, str(_pkg_root))
 if str(_pkg_root.parent) not in sys.path:
@@ -66,27 +72,27 @@ def render_sidebar():
     """Render the sidebar with navigation and settings."""
     with st.sidebar:
         st.image("https://via.placeholder.com/150x50?text=BinPacking", use_container_width=True)
-        st.markdown("# 📦 Multi-Bin Packing")
+        st.markdown("# 📦 Empaquetado Multi-Contenedor")
         st.markdown("---")
         
         # Navigation
-        st.markdown("### Navigation")
+        st.markdown("### Navegación")
         page = st.radio(
-            "Select Page",
-            options=['🏠 Home', '🔬 Solver', '📊 Analysis', '📚 Theory', '⚙️ Settings'],
+            "Seleccionar Página",
+            options=['🏠 Inicio', '🔬 Solucionador', '📊 Análisis', '📚 Teoría', '⚙️ Configuración'],
             label_visibility='collapsed'
         )
         
         st.markdown("---")
         
         # Quick settings
-        st.markdown("### Quick Settings")
+        st.markdown("### Ajustes Rápidos")
         theme = st.selectbox(
-            "Theme",
-            options=['Dark', 'Light'],
+            "Tema",
+            options=['Oscuro', 'Claro'],
             index=0 if st.session_state['theme'] == 'dark' else 1
         )
-        st.session_state['theme'] = theme.lower()
+        st.session_state['theme'] = 'dark' if theme == 'Oscuro' else 'light'
         
         # Apply theme
         ThemeManager.apply_theme(st.session_state['theme'])
@@ -94,20 +100,20 @@ def render_sidebar():
         st.markdown("---")
         
         # Info section
-        with st.expander("ℹ️ About"):
+        with st.expander("ℹ️ Acerca de"):
             st.markdown("""
-            **Balanced Multi-Bin Packing**
+            **Empaquetado Multi-Contenedor Balanceado**
             
-            An interactive tool for solving the 
-            NP-hard bin packing problem with 
-            balance constraints.
+            Una herramienta interactiva para resolver el
+            problema NP-difícil de empaquetado en contenedores
+            con restricciones de balance.
             
-            Features:
-            - Multiple algorithms
-            - Real-time visualization
-            - Benchmark analysis
+            Características:
+            - Múltiples algoritmos
+            - Visualización en tiempo real
+            - Análisis de benchmarks
             
-            *DAA Project - 2024*
+            *Proyecto DAA - 2024*
             """)
         
         return page
@@ -116,36 +122,36 @@ def render_sidebar():
 def render_home_page():
     """Render the home page."""
     st.markdown("""
-    # 🏠 Welcome to Balanced Multi-Bin Packing Solver
+    # 🏠 Bienvenido al Solucionador de Empaquetado Multi-Contenedor Balanceado
     
-    This interactive dashboard allows you to explore and solve the 
-    **Balanced Multi-Bin Packing with Capacity Constraints** problem.
+    Este dashboard interactivo te permite explorar y resolver el problema de
+    **Empaquetado Multi-Contenedor Balanceado con Restricciones de Capacidad**.
     
-    ## 📋 Problem Description
+    ## 📋 Descripción del Problema
     
-    Given:
-    - A set of **n items**, each with a weight and value
-    - **k bins** with capacity C
+    Dado:
+    - Un conjunto de **n ítems**, cada uno con peso y valor
+    - **k contenedores** con capacidades individuales C_j
     
-    Objective:
-    - Minimize the **maximum difference** in total values between bins
-    - While respecting **capacity constraints**
+    Objetivo:
+    - Minimizar la **diferencia máxima** de valores totales entre contenedores
+    - Respetando las **restricciones de capacidad**
     
-    ## 🎯 Features
+    ## 🎯 Características
     
-    | Feature | Description |
-    |---------|-------------|
-    | 🔬 Multiple Algorithms | Greedy, Metaheuristics, Exact methods |
-    | 📊 Visualizations | Interactive charts and animations |
-    | 📈 Benchmarking | Compare algorithm performance |
-    | 📚 Theory | Mathematical formalization and proofs |
+    | Característica | Descripción |
+    |----------------|-------------|
+    | 🔬 Múltiples Algoritmos | Voraz, Metaheurísticas, Métodos Exactos |
+    | 📊 Visualizaciones | Gráficos interactivos y animaciones |
+    | 📈 Benchmarking | Comparar rendimiento de algoritmos |
+    | 📚 Teoría | Formalización matemática y demostraciones |
     
-    ## 🚀 Getting Started
+    ## 🚀 Comenzar
     
-    1. Navigate to the **Solver** page
-    2. Configure your problem instance
-    3. Select algorithms to run
-    4. Analyze the results!
+    1. Navega a la página **Solucionador**
+    2. Configura tu instancia del problema
+    3. Selecciona algoritmos a ejecutar
+    4. ¡Analiza los resultados!
     
     ---
     """)
@@ -154,13 +160,13 @@ def render_home_page():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Algorithms", "9+", help="Available algorithms")
+        st.metric("Algoritmos", "9+", help="Algoritmos disponibles")
     with col2:
-        st.metric("Complexity", "NP-Hard", help="Problem complexity class")
+        st.metric("Complejidad", "NP-Difícil", help="Clase de complejidad del problema")
     with col3:
-        st.metric("Max Items", "100", help="Supported item count")
+        st.metric("Máx Ítems", "100", help="Cantidad de ítems soportada")
     with col4:
-        st.metric("Visualizations", "5+", help="Chart types available")
+        st.metric("Visualizaciones", "5+", help="Tipos de gráficos disponibles")
 
 
 def render_solver_page(problem_config: ProblemConfigurator, 
@@ -168,7 +174,7 @@ def render_solver_page(problem_config: ProblemConfigurator,
                        results_display: ResultsDisplay,
                        viz_panel: VisualizationPanel):
     """Render the main solver page."""
-    st.markdown("# 🔬 Problem Solver")
+    st.markdown("# 🔬 Solucionador del Problema")
     
     # Two-column layout
     col1, col2 = st.columns([1, 1])
@@ -185,11 +191,11 @@ def render_solver_page(problem_config: ProblemConfigurator,
         algorithm_configs = algo_selector.render()
         
         # Run button
-        if st.button("▶️ Run Algorithms", type="primary", use_container_width=True):
+        if st.button("▶️ Ejecutar Algoritmos", type="primary", use_container_width=True):
             if problem is None:
-                st.error("Please generate a problem instance first!")
+                st.error("¡Por favor genera una instancia del problema primero!")
             elif not algorithm_configs:
-                st.error("Please select at least one algorithm!")
+                st.error("¡Por favor selecciona al menos un algoritmo!")
             else:
                 run_algorithms(problem, algorithm_configs)
     
@@ -218,12 +224,12 @@ def run_algorithms(problem: Problem, algorithm_configs: list):
     results = {}
     convergence_history = {}
     
-    progress_bar = st.progress(0, text="Running algorithms...")
+    progress_bar = st.progress(0, text="Ejecutando algoritmos...")
     
     for idx, (algo_name, params) in enumerate(algorithm_configs):
         progress_bar.progress(
             (idx + 1) / len(algorithm_configs),
-            text=f"Running {algo_name}..."
+            text=f"Ejecutando {algo_name}..."
         )
         
         try:
@@ -231,7 +237,7 @@ def run_algorithms(problem: Problem, algorithm_configs: list):
             algorithm = create_algorithm_instance(algo_name, params)
             
             if algorithm is None:
-                st.warning(f"Algorithm {algo_name} not available")
+                st.warning(f"Algoritmo {algo_name} no disponible")
                 continue
             
             # Run algorithm
@@ -258,7 +264,7 @@ def run_algorithms(problem: Problem, algorithm_configs: list):
                 convergence_history[algo_name] = algorithm.history
                 
         except Exception as e:
-            st.error(f"Error running {algo_name}: {str(e)}")
+            st.error(f"Error ejecutando {algo_name}: {str(e)}")
             results[algo_name] = {
                 'objective': float('inf'),
                 'time': 0,
@@ -266,12 +272,12 @@ def run_algorithms(problem: Problem, algorithm_configs: list):
                 'error': str(e)
             }
     
-    progress_bar.progress(1.0, text="Complete!")
+    progress_bar.progress(1.0, text="¡Completado!")
     
     st.session_state['results'] = results
     st.session_state['convergence_history'] = convergence_history
     
-    st.success(f"✅ Completed {len(results)} algorithm(s)")
+    st.success(f"✅ Se completaron {len(results)} algoritmo(s)")
 
 
 def create_algorithm_instance(algo_name: str, params: Dict[str, Any]):
@@ -336,9 +342,10 @@ def check_feasibility(solution: Solution, problem: Problem) -> bool:
     if not solution or not solution.bins:
         return False
     
-    for bin_obj in solution.bins:
+    for i, bin_obj in enumerate(solution.bins):
         total_weight = sum(item.weight for item in bin_obj.items)
-        if total_weight > problem.bin_capacity:
+        capacity = problem.bin_capacities[i] if i < len(problem.bin_capacities) else problem.bin_capacities[0]
+        if total_weight > capacity:
             return False
     
     return True
@@ -346,19 +353,19 @@ def check_feasibility(solution: Solution, problem: Problem) -> bool:
 
 def render_analysis_page(viz_panel: VisualizationPanel):
     """Render the analysis page."""
-    st.markdown("# 📊 Results Analysis")
+    st.markdown("# 📊 Análisis de Resultados")
     
     if not st.session_state.get('results'):
-        st.info("No results to analyze. Run some algorithms first!")
+        st.info("No hay resultados para analizar. ¡Ejecuta algunos algoritmos primero!")
         return
     
     results = st.session_state['results']
     
     # Tabs for different analyses
-    tab1, tab2, tab3 = st.tabs(["📈 Performance", "🔄 Convergence", "📊 Comparison"])
+    tab1, tab2, tab3 = st.tabs(["📈 Rendimiento", "🔄 Convergencia", "📊 Comparación"])
     
     with tab1:
-        st.markdown("### Algorithm Performance Metrics")
+        st.markdown("### Métricas de Rendimiento de Algoritmos")
         
         # Create performance dataframe
         import pandas as pd
@@ -366,11 +373,11 @@ def render_analysis_page(viz_panel: VisualizationPanel):
         perf_data = []
         for algo, result in results.items():
             perf_data.append({
-                'Algorithm': algo,
-                'Objective': result.get('objective', '-'),
-                'Time (s)': f"{result.get('time', 0):.4f}",
+                'Algoritmo': algo,
+                'Objetivo': result.get('objective', '-'),
+                'Tiempo (s)': f"{result.get('time', 0):.4f}",
                 'Balance': f"{result.get('balance_score', 0):.2%}",
-                'Feasible': '✅' if result.get('feasible') else '❌'
+                'Factible': '✅' if result.get('feasible') else '❌'
             })
         
         df = pd.DataFrame(perf_data)
@@ -380,15 +387,15 @@ def render_analysis_page(viz_panel: VisualizationPanel):
         viz_panel.render_performance_radar(results)
     
     with tab2:
-        st.markdown("### Convergence Analysis")
+        st.markdown("### Análisis de Convergencia")
         
         if st.session_state.get('convergence_history'):
             viz_panel.render_convergence_plot(st.session_state['convergence_history'])
         else:
-            st.info("No convergence data available. Run metaheuristic algorithms to see convergence.")
+            st.info("No hay datos de convergencia disponibles. Ejecuta algoritmos metaheurísticos para ver la convergencia.")
     
     with tab3:
-        st.markdown("### Algorithm Comparison")
+        st.markdown("### Comparación de Algoritmos")
         
         # Create comparison visualizations
         import plotly.graph_objects as go
@@ -402,14 +409,14 @@ def render_analysis_page(viz_panel: VisualizationPanel):
         fig.add_trace(go.Bar(
             x=algos,
             y=objectives,
-            name='Objective Value',
+            name='Valor Objetivo',
             marker_color='#1f77b4'
         ))
         
         fig.update_layout(
-            title='Objective Values by Algorithm',
-            xaxis_title='Algorithm',
-            yaxis_title='Objective Value',
+            title='Valores Objetivos por Algoritmo',
+            xaxis_title='Algoritmo',
+            yaxis_title='Valor Objetivo',
             template='plotly_dark' if st.session_state['theme'] == 'dark' else 'plotly_white'
         )
         
@@ -418,41 +425,41 @@ def render_analysis_page(viz_panel: VisualizationPanel):
 
 def render_theory_page():
     """Render the theory page."""
-    st.markdown("# 📚 Theoretical Background")
+    st.markdown("# 📚 Fundamentos Teóricos")
     
     tabs = st.tabs([
-        "📐 Formalization",
-        "🔢 Complexity", 
-        "📝 Algorithms",
-        "📖 References"
+        "📐 Formalización",
+        "🔢 Complejidad", 
+        "📝 Algoritmos",
+        "📖 Referencias"
     ])
     
     with tabs[0]:
         st.markdown("""
-        ## Mathematical Formalization
+        ## Formalización Matemática
         
-        ### Problem Definition
+        ### Definición del Problema
         
-        The **Balanced Multi-Bin Packing Problem** can be formally defined as:
+        El **Problema de Empaquetado Multi-Contenedor Balanceado** se define formalmente como:
         
-        **Given:**
-        - A set of items $I = \\{1, 2, ..., n\\}$
-        - Each item $i$ has weight $w_i$ and value $v_i$
-        - $k$ identical bins with capacity $C$
+        **Dado:**
+        - Un conjunto de ítems $I = \\{1, 2, ..., n\\}$
+        - Cada ítem $i$ tiene peso $w_i$ y valor $v_i$
+        - $k$ contenedores con capacidades individuales $C_j$
         
-        **Decision Variables:**
-        - $x_{ij} \\in \\{0, 1\\}$: 1 if item $i$ is assigned to bin $j$
-        - $z$: makespan (maximum total value in any bin)
+        **Variables de Decisión:**
+        - $x_{ij} \\in \\{0, 1\\}$: 1 si el ítem $i$ es asignado al contenedor $j$
+        - $z$: makespan (valor total máximo en cualquier contenedor)
         
-        ### ILP Formulation
+        ### Formulación ILP
         
         $$\\min z$$
         
-        Subject to:
+        Sujeto a:
         
         $$\\sum_{j=1}^{k} x_{ij} = 1 \\quad \\forall i \\in I$$
         
-        $$\\sum_{i=1}^{n} w_i \\cdot x_{ij} \\leq C \\quad \\forall j = 1,...,k$$
+        $$\\sum_{i=1}^{n} w_i \\cdot x_{ij} \\leq C_j \\quad \\forall j = 1,...,k$$
         
         $$\\sum_{i=1}^{n} v_i \\cdot x_{ij} \\leq z \\quad \\forall j = 1,...,k$$
         
@@ -461,66 +468,66 @@ def render_theory_page():
     
     with tabs[1]:
         st.markdown("""
-        ## Complexity Analysis
+        ## Análisis de Complejidad
         
-        ### NP-Hardness Proof
+        ### Demostración de NP-Dureza
         
-        The Balanced Multi-Bin Packing Problem is **NP-hard**.
+        El Problema de Empaquetado Multi-Contenedor Balanceado es **NP-difícil**.
         
-        **Proof:** By reduction from 3-PARTITION.
+        **Demostración:** Por reducción desde 3-PARTITION.
         
-        Given an instance of 3-PARTITION with integers $a_1, ..., a_{3m}$ 
-        and target $B = \\frac{1}{m}\\sum a_i$, we construct a bin packing instance:
+        Dada una instancia de 3-PARTITION con enteros $a_1, ..., a_{3m}$ 
+        y objetivo $B = \\frac{1}{m}\\sum a_i$, construimos una instancia:
         
-        1. Create item $i$ with weight $w_i = v_i = a_i$
-        2. Set $k = m$ bins with capacity $C = B$
+        1. Crear ítem $i$ con peso $w_i = v_i = a_i$
+        2. Establecer $k = m$ contenedores con capacidad $C = B$
         
-        A valid 3-PARTITION exists if and only if we can achieve 
-        objective value 0 (perfect balance).
+        Existe una 3-PARTITION válida si y solo si podemos alcanzar
+        valor objetivo 0 (balance perfecto).
         
-        ### Algorithm Complexities
+        ### Complejidades de Algoritmos
         
-        | Algorithm | Time | Space |
-        |-----------|------|-------|
+        | Algoritmo | Tiempo | Espacio |
+        |-----------|--------|---------|
         | FFD | $O(n \\log n)$ | $O(n)$ |
         | BFD | $O(n^2)$ | $O(n)$ |
-        | Simulated Annealing | $O(I \\cdot n)$ | $O(n)$ |
-        | Genetic Algorithm | $O(G \\cdot P \\cdot n)$ | $O(P \\cdot n)$ |
-        | Branch & Bound | $O(k^n)$ worst | $O(n)$ |
+        | Recocido Simulado | $O(I \\cdot n)$ | $O(n)$ |
+        | Algoritmo Genético | $O(G \\cdot P \\cdot n)$ | $O(P \\cdot n)$ |
+        | Branch & Bound | $O(k^n)$ peor caso | $O(n)$ |
         """)
     
     with tabs[2]:
         st.markdown("""
-        ## Algorithm Descriptions
+        ## Descripción de Algoritmos
         
-        ### Greedy Algorithms
+        ### Algoritmos Voraces
         
         **First Fit Decreasing (FFD):**
-        1. Sort items by weight (descending)
-        2. For each item, place in first bin that fits
-        3. Complexity: $O(n \\log n)$
+        1. Ordenar ítems por peso (descendente)
+        2. Para cada ítem, colocar en primer contenedor que quepa
+        3. Complejidad: $O(n \\log n)$
         
         **Best Fit Decreasing (BFD):**
-        1. Sort items by weight (descending)
-        2. For each item, place in bin with minimum remaining space
-        3. Provides tighter packing
+        1. Ordenar ítems por peso (descendente)
+        2. Para cada ítem, colocar en contenedor con mínimo espacio restante
+        3. Proporciona empaquetado más compacto
         
-        ### Metaheuristics
+        ### Metaheurísticas
         
-        **Simulated Annealing:**
-        - Probabilistic local search
-        - Accepts worse solutions with probability $e^{-\\Delta/T}$
-        - Temperature decreases over time (cooling schedule)
+        **Recocido Simulado:**
+        - Búsqueda local probabilística
+        - Acepta peores soluciones con probabilidad $e^{-\\Delta/T}$
+        - La temperatura decrece con el tiempo (esquema de enfriamiento)
         
-        **Genetic Algorithm:**
-        - Population-based evolutionary approach
-        - Uses selection, crossover, and mutation operators
-        - Explores diverse solution space
+        **Algoritmo Genético:**
+        - Enfoque evolutivo basado en población
+        - Usa operadores de selección, cruce y mutación
+        - Explora espacio de soluciones diverso
         """)
     
     with tabs[3]:
         st.markdown("""
-        ## References
+        ## Referencias
         
         1. Garey, M.R., & Johnson, D.S. (1979). *Computers and Intractability: 
            A Guide to the Theory of NP-Completeness*. W.H. Freeman.
@@ -542,60 +549,60 @@ def render_theory_page():
 
 def render_settings_page():
     """Render the settings page."""
-    st.markdown("# ⚙️ Settings")
+    st.markdown("# ⚙️ Configuración")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("### Appearance")
+        st.markdown("### Apariencia")
         
         theme = st.selectbox(
-            "Color Theme",
-            options=['Dark', 'Light'],
+            "Tema de Color",
+            options=['Oscuro', 'Claro'],
             index=0 if st.session_state['theme'] == 'dark' else 1
         )
-        st.session_state['theme'] = theme.lower()
+        st.session_state['theme'] = 'dark' if theme == 'Oscuro' else 'light'
         
-        st.markdown("### Performance")
+        st.markdown("### Rendimiento")
         
         max_iterations = st.number_input(
-            "Default Max Iterations",
+            "Máx. Iteraciones por Defecto",
             min_value=100,
             max_value=100000,
             value=10000
         )
         
         time_limit = st.number_input(
-            "Default Time Limit (seconds)",
+            "Límite de Tiempo por Defecto (segundos)",
             min_value=1,
             max_value=300,
             value=60
         )
     
     with col2:
-        st.markdown("### Data")
+        st.markdown("### Datos")
         
-        if st.button("🗑️ Clear Results"):
+        if st.button("🗑️ Limpiar Resultados"):
             st.session_state['results'] = {}
             st.session_state['convergence_history'] = {}
-            st.success("Results cleared!")
+            st.success("¡Resultados limpiados!")
         
-        if st.button("🔄 Reset Problem"):
+        if st.button("🔄 Reiniciar Problema"):
             st.session_state['current_problem'] = None
-            st.success("Problem reset!")
+            st.success("¡Problema reiniciado!")
         
-        st.markdown("### Export")
+        st.markdown("### Exportar")
         
-        if st.button("📤 Export All Data"):
-            st.info("Export functionality - coming soon!")
+        if st.button("📤 Exportar Todos los Datos"):
+            st.info("Funcionalidad de exportación - ¡próximamente!")
     
     st.markdown("---")
     st.markdown("""
-    ### System Information
+    ### Información del Sistema
     
-    - **Version:** 0.1.0
+    - **Versión:** 0.1.0
     - **Python:** 3.11+
-    - **Streamlit:** Latest
+    - **Streamlit:** Última versión
     """)
 
 
@@ -615,15 +622,15 @@ def main():
     page = render_sidebar()
     
     # Render appropriate page
-    if page == '🏠 Home':
+    if page == '🏠 Inicio':
         render_home_page()
-    elif page == '🔬 Solver':
+    elif page == '🔬 Solucionador':
         render_solver_page(problem_config, algo_selector, results_display, viz_panel)
-    elif page == '📊 Analysis':
+    elif page == '📊 Análisis':
         render_analysis_page(viz_panel)
-    elif page == '📚 Theory':
+    elif page == '📚 Teoría':
         render_theory_page()
-    elif page == '⚙️ Settings':
+    elif page == '⚙️ Configuración':
         render_settings_page()
 
 

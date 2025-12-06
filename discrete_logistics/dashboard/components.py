@@ -776,7 +776,7 @@ class VisualizationPanel:
     
     def render_bin_heatmap(self, solution: Solution):
         """Render heatmap of bin utilization."""
-        st.markdown("#### Bin Utilization Heatmap")
+        st.markdown("#### Mapa de Calor de Utilización")
         
         # Create utilization matrix
         bin_data = []
@@ -788,14 +788,14 @@ class VisualizationPanel:
         
         fig = go.Figure(data=go.Heatmap(
             z=bin_data,
-            x=['Weight Util.', 'Value Sum', 'Item Count'],
-            y=[f"Bin {i+1}" for i in range(len(solution.bins))],
+            x=['Util. Peso', 'Suma Valor', 'Cant. Ítems'],
+            y=[f"Cont. {i+1}" for i in range(len(solution.bins))],
             colorscale='RdYlGn',
             showscale=True
         ))
         
         fig.update_layout(
-            title="Bin Utilization Metrics",
+            title="Métricas de Utilización de Contenedores",
             template=self.theme['plotly_template'],
             height=300
         )
@@ -833,27 +833,27 @@ class ExportManager:
     @staticmethod
     def render_export_buttons(results: Dict[str, Any]):
         """Render export buttons in the UI."""
-        st.markdown("### 💾 Export Results")
+        st.markdown("### 💾 Exportar Resultados")
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
             json_data = ExportManager.export_to_json(results, "results")
             st.download_button(
-                label="📄 Download JSON",
+                label="📄 Descargar JSON",
                 data=json_data,
-                file_name="results.json",
+                file_name="resultados.json",
                 mime="application/json"
             )
         
         with col2:
             csv_data = ExportManager.export_to_csv(results)
             st.download_button(
-                label="📊 Download CSV",
+                label="📊 Descargar CSV",
                 data=csv_data,
-                file_name="results.csv",
+                file_name="resultados.csv",
                 mime="text/csv"
             )
         
         with col3:
-            st.button("📋 Copy to Clipboard", disabled=True, help="Coming soon")
+            st.button("📋 Copiar al Portapapeles", disabled=True, help="Próximamente")

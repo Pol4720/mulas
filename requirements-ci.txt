@@ -1,4 +1,4 @@
-# Core dependencies
+# Core dependencies (CI-friendly, no system dependencies required)
 numpy>=1.24.0
 scipy>=1.11.0
 
@@ -11,13 +11,8 @@ seaborn>=0.13.0
 streamlit>=1.29.0
 dash>=2.14.0
 
-# Animation (optional - requires system dependencies: pango, cairo)
-# Install separately if needed: pip install manim
-# manim>=0.18.0
-
-# Optimization solvers (optional)
-# pulp>=2.7.0
-# ortools>=9.7
+# NOTE: manim excluded from CI - requires system dependencies (pangocairo)
+# For local development with animations, install separately: pip install manim
 
 # Data handling
 pandas>=2.1.0
@@ -42,4 +37,3 @@ sphinx-rtd-theme>=2.0.0
 jupyter>=1.0.0
 ipykernel>=6.27.0
 ipywidgets>=8.1.0
-

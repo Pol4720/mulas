@@ -68,7 +68,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install numpy scipy plotly matplotlib seaborn pandas tqdm click
         pip install pytest pytest-cov pytest-xdist
     
     - name: Run tests with coverage
@@ -103,7 +103,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install numpy scipy plotly matplotlib seaborn pandas tqdm click
         pip install pytest
     
     - name: Test Greedy Algorithms
@@ -141,7 +141,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install numpy scipy plotly matplotlib seaborn pandas tqdm click
         pip install pytest
     
     - name: Run integration tests
@@ -202,8 +202,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
         pip install sphinx sphinx-rtd-theme myst-parser
+        pip install numpy scipy pandas  # Core deps for doc generation
     
     - name: Build documentation
       run: |
@@ -237,5 +237,5 @@ jobs:
     
     - name: Check dependencies for vulnerabilities
       run: |
-        pip install -r requirements.txt
+        pip install numpy scipy plotly matplotlib seaborn pandas tqdm click
         safety check --full-report || true

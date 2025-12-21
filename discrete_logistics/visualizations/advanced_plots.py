@@ -314,7 +314,7 @@ class AdvancedSolutionPlots:
         return fig
     
     @staticmethod
-    def 3d_bin_visualization(
+    def bin_visualization_3d(
         solution,
         title: str = "Visualización 3D de Contenedores"
     ) -> go.Figure:

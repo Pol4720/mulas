@@ -348,3 +348,191 @@ class TestAlgorithmComparison:
         
         assert bb_sol.value_difference <= greedy_sol.value_difference + 1e-6
         assert dp_sol.value_difference <= greedy_sol.value_difference + 1e-6
+
+
+# ============================================================================
+# Robustness and Edge Case Tests
+# ============================================================================
+
+class TestRobustness:
+    """Robustness tests to catch edge cases and common bugs."""
+    
+    def test_string_item_ids(self):
+        """Test all algorithms work with string item IDs (common bug source)."""
+        items = [
+            Item(id=f"item_{i}", weight=10 + i, value=50 + i * 10)
+            for i in range(15)
+        ]
+        problem = Problem(
+            items=items,
+            num_bins=3,
+            bin_capacities=[100.0, 100.0, 100.0]
+        )
+        
+        # Test all algorithms with string IDs
+        algorithms = [
+            FirstFitDecreasing(),
+            BestFitDecreasing(),
+            WorstFitDecreasing(),
+            RoundRobinGreedy(),
+            LargestDifferenceFirst(),
+            SimulatedAnnealing(max_iterations=50),
+            GeneticAlgorithm(population_size=10, generations=10),
+            TabuSearch(max_iterations=50),
+        ]
+        
+        for alg in algorithms:
+            try:
+                solution = alg.solve(problem)
+                assert validate_solution(solution, problem), \
+                    f"Algorithm {alg.name} failed validation with string IDs"
+            except Exception as e:
+                pytest.fail(f"Algorithm {alg.name} crashed with string IDs: {e}")
+    
+    def test_large_instance(self):
+        """Test algorithms on larger instances (20+ items)."""
+        items = [
+            Item(id=f"i{i:03d}", weight=5 + (i % 10), value=20 + (i * 3) % 50)
+            for i in range(25)
+        ]
+        problem = Problem(
+            items=items,
+            num_bins=5,
+            bin_capacities=[80.0] * 5
+        )
+        
+        # Test heuristics on larger instance
+        algorithms = [
+            FirstFitDecreasing(),
+            BestFitDecreasing(),
+            LargestDifferenceFirst(),
+            SimulatedAnnealing(max_iterations=100),
+            TabuSearch(max_iterations=100),
+        ]
+        
+        for alg in algorithms:
+            solution = alg.solve(problem)
+            assert validate_solution(solution, problem), \
+                f"Algorithm {alg.name} failed on large instance"
+    
+    def test_all_same_value_items(self):
+        """Test with items that all have the same value (edge case for balancing)."""
+        items = [
+            Item(id=f"equal_{i}", weight=10, value=100)
+            for i in range(6)
+        ]
+        problem = Problem(
+            items=items,
+            num_bins=3,
+            bin_capacities=[50.0] * 3
+        )
+        
+        dp = DynamicProgramming()
+        solution = dp.solve(problem)
+        
+        # Should achieve perfect balance (diff=0) with same-value items
+        assert solution.value_difference == 0, \
+            f"DP should find perfect balance with same-value items, got diff={solution.value_difference}"
+    
+    def test_unbalanceable_instance(self):
+        """Test instance that cannot be perfectly balanced."""
+        items = [
+            Item(id="big", weight=10, value=1000),
+            Item(id="small1", weight=5, value=1),
+            Item(id="small2", weight=5, value=1),
+        ]
+        problem = Problem(
+            items=items,
+            num_bins=2,
+            bin_capacities=[50.0, 50.0]
+        )
+        
+        # All algorithms should still produce valid solutions
+        algorithms = [
+            FirstFitDecreasing(),
+            TabuSearch(max_iterations=50),
+            DynamicProgramming(),
+        ]
+        
+        for alg in algorithms:
+            solution = alg.solve(problem)
+            assert validate_solution(solution, problem)
+    
+    def test_empty_bins_allowed(self):
+        """Test that algorithms handle cases where some bins should be empty."""
+        items = [
+            Item(id="single", weight=10, value=100),
+        ]
+        problem = Problem(
+            items=items,
+            num_bins=3,
+            bin_capacities=[50.0] * 3
+        )
+        
+        algorithms = [
+            FirstFitDecreasing(),
+            DynamicProgramming(),
+        ]
+        
+        for alg in algorithms:
+            solution = alg.solve(problem)
+            assert validate_solution(solution, problem)
+            # Exactly one bin should have the item
+            non_empty = sum(1 for b in solution.bins if b.items)
+            assert non_empty == 1, f"Expected 1 non-empty bin, got {non_empty}"
+
+
+class TestDashboardIntegration:
+    """Tests for dashboard integration correctness."""
+    
+    def test_all_algorithms_available_in_dashboard(self):
+        """Verify all algorithms in selector can be instantiated."""
+        from discrete_logistics.dashboard.shared import create_algorithm_instance
+        
+        algorithm_names = [
+            'FirstFitDecreasing',
+            'BestFitDecreasing', 
+            'WorstFitDecreasing',
+            'RoundRobinGreedy',
+            'LargestDifferenceFirst',
+            'SimulatedAnnealing',
+            'GeneticAlgorithm',
+            'TabuSearch',
+            'BranchAndBound',
+            'DynamicProgramming',
+        ]
+        
+        for name in algorithm_names:
+            params = {}
+            alg = create_algorithm_instance(name, params)
+            assert alg is not None, f"Algorithm {name} not available in dashboard"
+            assert hasattr(alg, 'solve'), f"Algorithm {name} missing solve method"
+    
+    def test_dashboard_algorithm_execution(self):
+        """Test that all dashboard algorithms can execute on a problem."""
+        from discrete_logistics.dashboard.shared import create_algorithm_instance
+        
+        items = [
+            Item(id=f"test_{i}", weight=10, value=50 + i * 5)
+            for i in range(8)
+        ]
+        problem = Problem(items=items, num_bins=3, bin_capacities=[50.0] * 3)
+        
+        algorithm_names = [
+            'FirstFitDecreasing',
+            'BestFitDecreasing',
+            'LargestDifferenceFirst',
+            'SimulatedAnnealing',
+            'TabuSearch',
+        ]
+        
+        for name in algorithm_names:
+            params = {'max_iterations': 50} if name in ['SimulatedAnnealing', 'TabuSearch'] else {}
+            alg = create_algorithm_instance(name, params)
+            
+            try:
+                solution = alg.solve(problem)
+                assert validate_solution(solution, problem), \
+                    f"Dashboard algorithm {name} produced invalid solution"
+            except Exception as e:
+                pytest.fail(f"Dashboard algorithm {name} crashed: {e}")

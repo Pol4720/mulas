@@ -117,23 +117,29 @@ class InteractiveTooltips:
         if not info:
             return
         
+        color = info['color']
+        # Convert hex to rgba for opacity
+        hex_color = color.lstrip('#')
+        r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+        
+        pros_html = ''.join(f'<li>{pro}</li>' for pro in info['pros'])
+        cons_html = ''.join(f'<li>{con}</li>' for con in info['cons'])
+        
         st.markdown(f"""
         <div style="
-            background: linear-gradient(145deg, {info['color']}20, {info['color']}05);
+            background: linear-gradient(145deg, rgba({r},{g},{b},0.12), rgba({r},{g},{b},0.03));
             border-radius: 16px;
             padding: 20px;
-            border-left: 4px solid {info['color']};
+            border-left: 4px solid {color};
             margin: 10px 0;
-            transition: all 0.3s ease;
-        " class="algo-card" onmouseover="this.style.transform='translateX(5px)'" 
-           onmouseout="this.style.transform='translateX(0)'">
+        ">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
                 <span style="font-size: 2rem;">{info['icon']}</span>
                 <div>
-                    <h3 style="margin: 0; color: {info['color']};">{algorithm_name}</h3>
+                    <h3 style="margin: 0; color: {color};">{algorithm_name}</h3>
                     <span style="
-                        background: {info['color']}30;
-                        color: {info['color']};
+                        background: rgba({r},{g},{b},0.2);
+                        color: {color};
                         padding: 2px 8px;
                         border-radius: 12px;
                         font-size: 0.75rem;
@@ -147,24 +153,24 @@ class InteractiveTooltips:
                 gap: 20px;
                 margin-top: 12px;
                 padding-top: 12px;
-                border-top: 1px solid {info['color']}20;
+                border-top: 1px solid rgba({r},{g},{b},0.15);
             ">
                 <div>
                     <span style="color: #94A3B8; font-size: 0.75rem;">Complejidad</span>
-                    <p style="margin: 0; font-weight: 600; color: {info['color']};">{info['complexity']}</p>
+                    <p style="margin: 0; font-weight: 600; color: {color};">{info['complexity']}</p>
                 </div>
             </div>
             <div style="display: flex; gap: 30px; margin-top: 12px;">
                 <div>
                     <span style="color: #22C55E; font-size: 0.75rem;">✅ Ventajas</span>
                     <ul style="margin: 4px 0; padding-left: 16px; color: #64748B; font-size: 0.85rem;">
-                        {''.join(f'<li>{pro}</li>' for pro in info['pros'])}
+                        {pros_html}
                     </ul>
                 </div>
                 <div>
                     <span style="color: #EF4444; font-size: 0.75rem;">⚠️ Limitaciones</span>
                     <ul style="margin: 4px 0; padding-left: 16px; color: #64748B; font-size: 0.85rem;">
-                        {''.join(f'<li>{con}</li>' for con in info['cons'])}
+                        {cons_html}
                     </ul>
                 </div>
             </div>
@@ -350,49 +356,41 @@ class SolutionComparator:
         else:
             winner = 1 if value1 > value2 else (2 if value2 > value1 else 0)
         
-        diff_pct = abs(value1 - value2) / max(value1, value2, 1) * 100
+        diff_pct = abs(value1 - value2) / max(value1, value2, 0.001) * 100
         
-        st.markdown(f"""
-        <div style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: linear-gradient(90deg, 
-                {'#6366F120' if winner == 1 else '#F8FAFC'} 0%, 
-                white 50%, 
-                {'#EC489920' if winner == 2 else '#F8FAFC'} 100%);
-            border-radius: 8px;
-            margin: 8px 0;
-        ">
-            <div style="flex: 1; text-align: center;">
-                <span style="
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: {'#6366F1' if winner == 1 else '#64748B'};
-                ">{value1:.2f}{unit}</span>
-                {'<span style="margin-left: 4px;">👑</span>' if winner == 1 else ''}
+        # Determine colors and badges
+        color1 = '#6366F1' if winner == 1 else '#64748B'
+        color2 = '#EC4899' if winner == 2 else '#64748B'
+        badge1 = ' 👑' if winner == 1 else ''
+        badge2 = ' 👑' if winner == 2 else ''
+        
+        col1, col2, col3 = st.columns([1, 1.2, 1])
+        
+        with col1:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 10px;">
+                <span style="font-size: 1.3rem; font-weight: 700; color: {color1};">
+                    {value1:.2f}{unit}{badge1}
+                </span>
             </div>
-            <div style="
-                flex: 1;
-                text-align: center;
-                font-size: 0.9rem;
-                color: #64748B;
-            ">
-                <strong>{metric_name}</strong>
-                <br/>
-                <span style="font-size: 0.75rem;">Δ {diff_pct:.1f}%</span>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 10px; background: rgba(100,100,100,0.05); border-radius: 8px;">
+                <strong style="color: #475569;">{metric_name}</strong><br/>
+                <span style="font-size: 0.75rem; color: #94A3B8;">Δ {diff_pct:.1f}%</span>
             </div>
-            <div style="flex: 1; text-align: center;">
-                <span style="
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: {'#EC4899' if winner == 2 else '#64748B'};
-                ">{value2:.2f}{unit}</span>
-                {'<span style="margin-left: 4px;">👑</span>' if winner == 2 else ''}
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 10px;">
+                <span style="font-size: 1.3rem; font-weight: 700; color: {color2};">
+                    {value2:.2f}{unit}{badge2}
+                </span>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
 
 # ============================================================================
@@ -465,97 +463,66 @@ class ExecutionTimeline:
         history: List[float],
         timestamps: Optional[List[float]] = None
     ) -> go.Figure:
-        """Create an animated convergence timeline."""
+        """Create a convergence timeline chart."""
         
         if timestamps is None:
             timestamps = list(range(len(history)))
         
-        # Create animation frames
-        frames = []
-        for i in range(1, len(history) + 1):
-            frames.append(go.Frame(
-                data=[go.Scatter(
-                    x=timestamps[:i],
-                    y=history[:i],
-                    mode='lines+markers',
-                    line=dict(color='#6366F1', width=3),
-                    marker=dict(size=6, color='#6366F1'),
-                    fill='tozeroy',
-                    fillcolor='rgba(99, 102, 241, 0.1)'
-                )],
-                name=str(i)
-            ))
+        fig = go.Figure()
         
-        fig = go.Figure(
-            data=[go.Scatter(
-                x=[timestamps[0]],
-                y=[history[0]],
-                mode='lines+markers',
-                line=dict(color='#6366F1', width=3),
-                marker=dict(size=6, color='#6366F1'),
-                fill='tozeroy',
-                fillcolor='rgba(99, 102, 241, 0.1)'
-            )],
-            frames=frames
-        )
+        # Main convergence line
+        fig.add_trace(go.Scatter(
+            x=timestamps,
+            y=history,
+            mode='lines+markers',
+            line=dict(color='#6366F1', width=2),
+            marker=dict(size=4, color='#6366F1'),
+            fill='tozeroy',
+            fillcolor='rgba(99, 102, 241, 0.1)',
+            name='Objetivo',
+            hovertemplate='Iteración: %{x}<br>Objetivo: %{y:.2f}<extra></extra>'
+        ))
         
         # Add best value indicator
-        best_idx = np.argmin(history)
-        fig.add_annotation(
-            x=timestamps[best_idx],
-            y=history[best_idx],
-            text=f"Mejor: {history[best_idx]:.2f}",
-            showarrow=True,
-            arrowhead=2,
-            arrowcolor='#10B981',
-            font=dict(color='#10B981', size=12),
-            bgcolor='white',
-            bordercolor='#10B981',
-            borderwidth=1,
-            borderpad=4
-        )
+        if history:
+            best_idx = int(np.argmin(history))
+            best_val = history[best_idx]
+            
+            # Best point marker
+            fig.add_trace(go.Scatter(
+                x=[timestamps[best_idx]],
+                y=[best_val],
+                mode='markers',
+                marker=dict(size=12, color='#10B981', symbol='star'),
+                name=f'Mejor: {best_val:.2f}',
+                hovertemplate=f'Mejor encontrado<br>Iteración: {timestamps[best_idx]}<br>Valor: {best_val:.2f}<extra></extra>'
+            ))
         
         fig.update_layout(
             xaxis=dict(
                 title='Iteración',
                 showgrid=True,
-                gridcolor='rgba(100,100,100,0.1)'
+                gridcolor='rgba(100,100,100,0.1)',
+                zeroline=False
             ),
             yaxis=dict(
                 title='Diferencia de Valores',
                 showgrid=True,
-                gridcolor='rgba(100,100,100,0.1)'
+                gridcolor='rgba(100,100,100,0.1)',
+                zeroline=False
             ),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            updatemenus=[dict(
-                type='buttons',
-                showactive=False,
-                y=1.15,
-                x=0.5,
+            margin=dict(l=60, r=40, t=40, b=60),
+            height=350,
+            legend=dict(
+                orientation='h',
+                yanchor='bottom',
+                y=1.02,
                 xanchor='center',
-                buttons=[
-                    dict(
-                        label='▶️ Reproducir',
-                        method='animate',
-                        args=[None, {
-                            'frame': {'duration': 50, 'redraw': True},
-                            'fromcurrent': True,
-                            'transition': {'duration': 0}
-                        }]
-                    ),
-                    dict(
-                        label='⏸️ Pausar',
-                        method='animate',
-                        args=[[None], {
-                            'frame': {'duration': 0, 'redraw': False},
-                            'mode': 'immediate',
-                            'transition': {'duration': 0}
-                        }]
-                    )
-                ]
-            )],
-            height=350
+                x=0.5
+            ),
+            hovermode='x unified'
         )
         
         return fig
@@ -863,13 +830,16 @@ class InteractiveBinVisualizer:
                 status = '🟢 Espacio disponible'
             
             with col:
+                # Convert color to rgba format
+                rgb = InteractiveBinVisualizer._hex_to_rgb(color)
+                
                 st.markdown(f"""
                 <div style="
-                    background: linear-gradient(135deg, {color}15, {color}05);
+                    background: linear-gradient(135deg, rgba({rgb}, 0.1), rgba({rgb}, 0.02));
                     border-radius: 12px;
                     padding: 16px;
                     text-align: center;
-                    border: 1px solid {color}30;
+                    border: 1px solid rgba({rgb}, 0.2);
                 ">
                     <h4 style="margin: 0; color: {color};">Bin {i + 1}</h4>
                     <div style="
@@ -881,12 +851,18 @@ class InteractiveBinVisualizer:
                     <p style="margin: 4px 0; color: #64748B; font-size: 0.85rem;">
                         {len(items)} ítems | Valor: {total_value:.1f}
                     </p>
-                    <span style="
-                        font-size: 0.75rem;
-                        color: {color};
-                    ">{status}</span>
+                    <span style="font-size: 0.75rem; color: {color};">{status}</span>
                 </div>
                 """, unsafe_allow_html=True)
+    
+    @staticmethod
+    def _hex_to_rgb(hex_color: str) -> str:
+        """Convert hex color to RGB string."""
+        hex_color = hex_color.lstrip('#')
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        return f"{r}, {g}, {b}"
 
 
 # ============================================================================
@@ -905,42 +881,34 @@ class QuickStatsDashboard:
         for col, (stat_name, stat_config) in zip(cols, stats.items()):
             with col:
                 value = stat_config.get('value', 0)
-                delta = stat_config.get('delta', None)
                 icon = stat_config.get('icon', '📊')
                 color = stat_config.get('color', '#6366F1')
                 
-                delta_html = ""
-                if delta is not None:
-                    delta_color = '#10B981' if delta >= 0 else '#EF4444'
-                    delta_icon = '↑' if delta >= 0 else '↓'
-                    delta_html = f"""
-                    <span style="
-                        color: {delta_color};
-                        font-size: 0.85rem;
-                        margin-left: 8px;
-                    ">{delta_icon} {abs(delta):.1f}%</span>
-                    """
+                # Format value
+                if isinstance(value, str):
+                    display_value = value
+                elif isinstance(value, float):
+                    display_value = f"{value:.2f}"
+                else:
+                    display_value = str(value)
                 
+                # Use st.metric for reliable rendering
                 st.markdown(f"""
                 <div style="
-                    background: linear-gradient(135deg, {color}12, {color}05);
+                    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.04));
                     border-radius: 12px;
                     padding: 16px;
                     text-align: center;
-                    border: 1px solid {color}20;
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px {color}20'"
-                   onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
-                    <div style="font-size: 1.5rem;">{icon}</div>
+                    border: 1px solid rgba(99, 102, 241, 0.15);
+                ">
+                    <div style="font-size: 1.5rem; margin-bottom: 4px;">{icon}</div>
                     <p style="margin: 4px 0; color: #64748B; font-size: 0.8rem;">{stat_name}</p>
                     <div style="
-                        font-size: 1.5rem;
+                        font-size: 1.4rem;
                         font-weight: 700;
                         color: {color};
-                    ">
-                        {value if isinstance(value, str) else f'{value:.2f}'}
-                        {delta_html}
-                    </div>
+                        margin-top: 4px;
+                    ">{display_value}</div>
                 </div>
                 """, unsafe_allow_html=True)
 

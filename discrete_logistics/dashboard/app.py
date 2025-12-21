@@ -155,6 +155,10 @@ features = [
 
 for icon, title, desc, color, col, delay in features:
     with col:
+        # Convert hex to rgba for opacity
+        hex_c = color.lstrip('#')
+        r, g, b = int(hex_c[0:2], 16), int(hex_c[2:4], 16), int(hex_c[4:6], 16)
+        
         st.markdown(f"""
         <div class="glass-card" style="
             text-align: center; 
@@ -164,7 +168,7 @@ for icon, title, desc, color, col, delay in features:
             <div style="
                 font-size: 3rem; 
                 margin-bottom: 16px;
-                background: linear-gradient(135deg, {color} 0%, {color}99 100%);
+                background: linear-gradient(135deg, {color} 0%, rgba({r},{g},{b},0.6) 100%);
                 border-radius: 16px;
                 padding: 16px;
                 display: inline-block;

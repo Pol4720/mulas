@@ -1025,9 +1025,12 @@ class AlgorithmSelector:
         'DynamicProgramming': {
             'name': 'Programación Dinámica',
             'category': 'Exacto',
-            'complexity': 'O(n × C^k)',
-            'description': 'Solución óptima para instancias pequeñas usando memoización.',
-            'params': {}
+            'complexity': 'O(k · 3^n)',
+            'description': '⚠️ Solo para instancias pequeñas (n≤15). Solución óptima garantizada.',
+            'params': {
+                'time_limit': (60.0, 5.0, 300.0, 'Límite de tiempo (segundos)')
+            },
+            'warning': 'Muy lento para n>15 items. Usa Branch & Bound para instancias mayores.'
         }
     }
     
@@ -1050,19 +1053,35 @@ class AlgorithmSelector:
         # Algorithm selection
         available_algorithms = self._filter_algorithms(selected_category)
         
-        # Determine default selection based on available algorithms
-        default_selection = []
-        if 'FirstFitDecreasing' in available_algorithms:
-            default_selection.append('FirstFitDecreasing')
-        elif available_algorithms:
-            default_selection.append(list(available_algorithms.keys())[0])
+        # Quick selection buttons
+        col1, col2, col3 = st.columns([1, 1, 2])
+        with col1:
+            select_all = st.button("✅ Seleccionar Todos", use_container_width=True, type="primary")
+        with col2:
+            clear_all = st.button("🗑️ Limpiar", use_container_width=True)
+        
+        # Handle selection state
+        if 'selected_algos' not in st.session_state:
+            st.session_state.selected_algos = ['FirstFitDecreasing'] if 'FirstFitDecreasing' in available_algorithms else []
+        
+        if select_all:
+            st.session_state.selected_algos = list(available_algorithms.keys())
+        if clear_all:
+            st.session_state.selected_algos = []
+        
+        # Filter session state to only include available algorithms
+        valid_selection = [a for a in st.session_state.selected_algos if a in available_algorithms]
         
         selected_algorithms = st.multiselect(
             "Seleccionar Algoritmos a Ejecutar",
             options=list(available_algorithms.keys()),
-            default=default_selection if default_selection else None,
-            format_func=lambda x: f"{available_algorithms[x]['name']} ({available_algorithms[x]['category']})"
+            default=valid_selection if valid_selection else None,
+            format_func=lambda x: f"{available_algorithms[x]['name']} ({available_algorithms[x]['category']})",
+            key="algo_multiselect"
         )
+        
+        # Update session state
+        st.session_state.selected_algos = selected_algorithms
         
         # Algorithm details and parameters
         algorithm_configs = []
@@ -1162,18 +1181,26 @@ class ResultsDisplay:
         """Render comparison table of all algorithms."""
         st.markdown("#### Comparación de Algoritmos")
         
+        # Add explanation for balance score
+        st.info(
+            "ℹ️ **Puntuación Balance** = 1 - (desviación estándar / media) de los valores por contenedor. "
+            "**1.0 = balance perfecto** (todos los bins tienen el mismo valor), "
+            "**0.0 = máximo desbalance**."
+        )
+        
         data = []
         for algo_name, result in results.items():
+            balance = result.get('balance_score', 0)
             data.append({
                 'Algoritmo': algo_name,
-                'Objetivo': result.get('objective', '-'),
-                'Puntuación Balance': result.get('balance_score', '-'),
-                'Tiempo (s)': result.get('time', '-'),
+                'Objetivo (diff)': f"{result.get('objective', 0):.2f}",
+                'Balance': f"{balance:.1%}" if isinstance(balance, (int, float)) else '-',
+                'Tiempo (s)': f"{result.get('time', 0):.4f}" if isinstance(result.get('time'), (int, float)) else '-',
                 'Factible': '✅' if result.get('feasible', False) else '❌'
             })
         
         df = pd.DataFrame(data)
-        df = df.sort_values('Objetivo')
+        df = df.sort_values('Objetivo (diff)')
         
         st.dataframe(df, use_container_width=True, hide_index=True)
     
@@ -1194,46 +1221,102 @@ class ResultsDisplay:
     
     def _create_bin_visualization(self, solution: Solution) -> go.Figure:
         """Create a visual representation of bin contents."""
-        fig = make_subplots(
-            rows=1, cols=len(solution.bins),
-            subplot_titles=[f"Cont. {i+1}" for i in range(len(solution.bins))]
-        )
+        num_bins = len(solution.bins)
+        
+        # Create figure with single x-axis for all bins side by side
+        fig = go.Figure()
         
         colors = px.colors.qualitative.Set3
         
+        # Collect bin info for proper capacity lines
+        max_capacity = 0
+        for bin_obj in solution.bins:
+            cap = getattr(bin_obj, 'capacity', 100)
+            if cap > max_capacity:
+                max_capacity = cap
+        
         for bin_idx, bin_obj in enumerate(solution.bins):
-            y_offset = 0
-            for item_idx, item in enumerate(bin_obj.items):
+            if not bin_obj.items:
+                # Add placeholder for empty bin
                 fig.add_trace(
                     go.Bar(
-                        x=[1],
-                        y=[item.weight],
-                        base=[y_offset],
-                        name=item.id,
-                        marker_color=colors[item_idx % len(colors)],
-                        text=f"{item.id}<br>w={item.weight:.1f}<br>v={item.value:.1f}",
+                        x=[f"Cont. {bin_idx + 1}"],
+                        y=[0],
+                        name=f"Cont. {bin_idx + 1} (vacío)",
+                        marker_color='rgba(200, 200, 200, 0.3)',
+                        text="Vacío",
                         textposition='inside',
                         hoverinfo='text',
                         showlegend=False
-                    ),
-                    row=1, col=bin_idx + 1
+                    )
                 )
-                y_offset += item.weight
-            
-            # Add capacity line
-            fig.add_hline(
-                y=solution.bins[0].capacity if hasattr(solution.bins[0], 'capacity') else 100,
-                line_dash="dash",
-                line_color="red",
-                row=1, col=bin_idx + 1
+            else:
+                y_offset = 0
+                for item_idx, item in enumerate(bin_obj.items):
+                    fig.add_trace(
+                        go.Bar(
+                            x=[f"Cont. {bin_idx + 1}"],
+                            y=[item.weight],
+                            base=[y_offset],
+                            name=item.id,
+                            marker_color=colors[item_idx % len(colors)],
+                            text=f"{item.id}<br>w={item.weight:.1f}<br>v={item.value:.1f}",
+                            textposition='inside',
+                            hovertemplate=f"<b>{item.id}</b><br>Peso: {item.weight:.2f}<br>Valor: {item.value:.2f}<extra></extra>",
+                            showlegend=False
+                        )
+                    )
+                    y_offset += item.weight
+        
+        # Add capacity line if available
+        bin_capacities = []
+        for i, bin_obj in enumerate(solution.bins):
+            cap = getattr(bin_obj, 'capacity', max_capacity)
+            bin_capacities.append(cap)
+        
+        # Add capacity indicators
+        if max_capacity > 0:
+            x_labels = [f"Cont. {i + 1}" for i in range(num_bins)]
+            fig.add_trace(
+                go.Scatter(
+                    x=x_labels,
+                    y=bin_capacities,
+                    mode='lines+markers',
+                    line=dict(color='red', width=2, dash='dash'),
+                    marker=dict(color='red', size=8),
+                    name='Capacidad máx.',
+                    hovertemplate="Capacidad: %{y:.1f}<extra></extra>"
+                )
             )
         
+        # Add summary metrics below
+        bin_weights = []
+        bin_values = []
+        for bin_obj in solution.bins:
+            bin_weights.append(sum(item.weight for item in bin_obj.items))
+            bin_values.append(sum(item.value for item in bin_obj.items))
+        
         fig.update_layout(
-            title="Contenido de Contenedores (Distribución de Peso)",
+            title=dict(
+                text="Contenido de Contenedores (Distribución de Peso)",
+                font=dict(size=16)
+            ),
             template=self.theme['plotly_template'],
-            height=400,
-            showlegend=False,
-            barmode='stack'
+            height=450,
+            showlegend=True,
+            legend=dict(orientation="h", yanchor="bottom", y=-0.2),
+            barmode='relative',
+            xaxis=dict(title="Contenedor", tickfont=dict(size=12)),
+            yaxis=dict(title="Peso Acumulado", tickfont=dict(size=12)),
+            annotations=[
+                dict(
+                    x=f"Cont. {i + 1}",
+                    y=bin_weights[i] + max_capacity * 0.05,
+                    text=f"v={bin_values[i]:.0f}",
+                    showarrow=False,
+                    font=dict(size=10, color='#4F46E5')
+                ) for i in range(num_bins) if bin_values[i] > 0
+            ]
         )
         
         return fig

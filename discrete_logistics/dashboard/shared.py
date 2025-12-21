@@ -252,11 +252,15 @@ def render_sidebar_info():
 
 def create_algorithm_instance(algo_name: str, params: Dict[str, Any]):
     """Create an algorithm instance by name."""
+    # Import LargestDifferenceFirst
+    from discrete_logistics.algorithms.greedy import LargestDifferenceFirst
+    
     algorithm_map = {
         'FirstFitDecreasing': FirstFitDecreasing,
         'BestFitDecreasing': BestFitDecreasing,
         'WorstFitDecreasing': WorstFitDecreasing,
         'RoundRobinGreedy': RoundRobinGreedy,
+        'LargestDifferenceFirst': LargestDifferenceFirst,
         'SimulatedAnnealing': lambda: SimulatedAnnealing(**params),
         'GeneticAlgorithm': lambda: GeneticAlgorithm(**params),
         'TabuSearch': lambda: TabuSearch(**params),

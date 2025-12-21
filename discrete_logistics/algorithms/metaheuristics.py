@@ -735,9 +735,9 @@ class TabuSearch(Algorithm):
         # Tabu list: maps move -> iteration when it becomes non-tabu
         tabu_list: Dict[TabuMove, int] = {}
         
-        # Frequency memory for diversification
-        move_frequency: Dict[int, Dict[int, int]] = {
-            i: {j: 0 for j in range(k)} for i in range(n)
+        # Frequency memory for diversification (use item.id as key, not index)
+        move_frequency: Dict[str, Dict[int, int]] = {
+            item.id: {j: 0 for j in range(k)} for item in items
         }
         
         self.objective_history = [current.value_difference]
@@ -887,7 +887,7 @@ class TabuSearch(Algorithm):
     def _diversify(
         self,
         solution: Solution,
-        move_frequency: Dict[int, Dict[int, int]],
+        move_frequency: Dict[str, Dict[int, int]],
         items: List[Item],
         k: int,
         capacities: List[float]

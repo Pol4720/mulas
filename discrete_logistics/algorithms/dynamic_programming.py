@@ -5,12 +5,18 @@ For small instances, DP can find optimal solutions by exploring
 the state space systematically.
 
 Note: Due to the problem's complexity, DP is only practical for
-very small instances (n ≤ 20, k ≤ 5).
+very small instances (n ≤ 15, k ≤ 4).
+
+WARNING: Complexity is O(k · 3^n), which means:
+- n=10: ~59,000 operations (instant)
+- n=15: ~14 million operations (seconds)  
+- n=20: ~3.5 billion operations (minutes to hours)
 """
 
 from typing import List, Dict, Tuple, Optional, Set
 from collections import defaultdict
 import numpy as np
+import time
 try:
     from ..core.problem import Problem, Solution, Bin, Item
     from .base import Algorithm, register_algorithm
@@ -40,6 +46,11 @@ class DynamicProgramming(Algorithm):
     
     State: dp[mask] = list of (value_tuple) where mask represents
     assigned items and value_tuple is values for bins 0..k-1
+    
+    PRACTICAL LIMITS (for reasonable execution time):
+    - n ≤ 12: Fast (< 1 second)
+    - n ≤ 15: Acceptable (< 30 seconds)
+    - n > 15: Falls back to greedy (too slow)
     """
     
     time_complexity = "O(k · 3^n)"
@@ -47,14 +58,23 @@ class DynamicProgramming(Algorithm):
     approximation_ratio = "Optimal (exact)"
     description = "Exact algorithm using dynamic programming, feasible only for small instances"
     
-    MAX_ITEMS = 20  # Safety limit
-    MAX_BINS = 8
+    MAX_ITEMS = 15  # Practical limit for reasonable time
+    MAX_BINS = 5
+    DEFAULT_TIMEOUT = 60.0  # seconds
     
     def __init__(self, track_steps: bool = False, verbose: bool = False,
-                 max_items: int = 20, max_bins: int = 8):
+                 max_items: int = 15, max_bins: int = 5, time_limit: float = 60.0):
         super().__init__(track_steps, verbose)
         self.max_items = min(max_items, self.MAX_ITEMS)
         self.max_bins = min(max_bins, self.MAX_BINS)
+        self.time_limit = time_limit
+        self._start_time = None
+    
+    def _check_timeout(self) -> bool:
+        """Check if execution has exceeded time limit."""
+        if self._start_time is None:
+            return False
+        return (time.time() - self._start_time) > self.time_limit
     
     @property
     def name(self) -> str:
@@ -62,22 +82,27 @@ class DynamicProgramming(Algorithm):
     
     def solve(self, problem: Problem) -> Solution:
         self._start_timer()
+        self._start_time = time.time()
         self._log(f"Starting DP on {problem.n_items} items, {problem.num_bins} bins")
         
-        # Check size limits
+        # Check size limits - be more conservative
         if problem.n_items > self.max_items:
-            self._log(f"Instance too large for DP (n={problem.n_items} > {self.max_items})")
+            self._log(f"Instance too large for DP (n={problem.n_items} > {self.max_items}), using greedy")
             return self._fallback_greedy(problem)
         
         if problem.num_bins > self.max_bins:
-            self._log(f"Too many bins for DP (k={problem.num_bins} > {self.max_bins})")
+            self._log(f"Too many bins for DP (k={problem.num_bins} > {self.max_bins}), using greedy")
             return self._fallback_greedy(problem)
+        
+        # Estimate complexity and warn
+        estimated_ops = problem.num_bins * (3 ** problem.n_items)
+        if estimated_ops > 1e9:
+            self._log(f"WARNING: Estimated {estimated_ops:.2e} operations, may take a while...")
         
         n = problem.n_items
         k = problem.num_bins
         items = problem.items
         capacities = problem.bin_capacities
-        
         # Precompute subset properties for each bin capacity
         self._log("Precomputing feasible subsets...")
         feasible_per_bin = self._compute_feasible_subsets_per_bin(items, capacities)
@@ -201,6 +226,10 @@ class DynamicProgramming(Algorithm):
         """
         Find the best k-partition using DP with individual bin capacities.
         
+        IMPORTANT: This algorithm minimizes the difference between max and min
+        bin values. To achieve optimal balance (diff=0), it must consider
+        ALL possible distributions including empty bins.
+        
         Returns:
             List of k lists, each containing item IDs for that bin
             Returns None if no feasible partition exists
@@ -208,19 +237,24 @@ class DynamicProgramming(Algorithm):
         n = len(items)
         full_mask = (1 << n) - 1
         
-        # dp[j][mask] = (best_max, best_min, assignment)
-        # j = number of bins used (0 to k)
+        # dp[j][mask] = (bin_values_tuple, assignment)
+        # j = number of bins used (0 to k)  
         # mask = items assigned so far
+        # bin_values_tuple = tuple of values for bins 0..j-1
         # assignment = list of item ID lists for each bin
+        #
+        # We store all bin values (not just max/min) to correctly compute
+        # the final objective when all k bins are assigned.
         
         INF = float('inf')
         
-        # Initialize: bin 0 (first bin)
+        # Initialize: bin 0 (first bin) - include empty set (value=0)
         dp = [{} for _ in range(k + 1)]
         
-        # With 1 bin (bin index 0), use feasible_per_bin[0]
+        # With 1 bin (bin index 0), try ALL feasible subsets including empty
         for mask, (weight, value) in feasible_per_bin[0].items():
-            dp[1][mask] = (value, value, [self._mask_to_items(mask, items)])
+            item_ids = self._mask_to_items(mask, items)
+            dp[1][mask] = ((value,), [item_ids])
         
         # DP transition: add bins one by one
         for j in range(2, k + 1):
@@ -228,58 +262,105 @@ class DynamicProgramming(Algorithm):
             bin_idx = j - 1  # Current bin index (0-based)
             feasible_j = feasible_per_bin[bin_idx]
             
-            for prev_mask in dp[j - 1]:
-                prev_max, prev_min, prev_assign = dp[j - 1][prev_mask]
+            # Check timeout at start of each bin processing
+            if self._check_timeout():
+                self._log(f"Timeout reached during DP, returning best found so far")
+                return self._extract_best_partial(dp, k, full_mask, items)
+            
+            for prev_mask, (prev_values, prev_assign) in list(dp[j - 1].items()):
                 remaining = full_mask ^ prev_mask  # Items not yet assigned
                 
                 # Try all feasible subsets of remaining items for this bin
+                # INCLUDING the empty set (subset=0)
                 subset = remaining
-                while subset >= 0:
+                while True:
                     self._iterations += 1
                     
+                    # Periodic timeout check (every 10000 iterations)
+                    if self._iterations % 10000 == 0 and self._check_timeout():
+                        self._log(f"Timeout at iteration {self._iterations}")
+                        return self._extract_best_partial(dp, k, full_mask, items)
+                    
                     if subset in feasible_j:
-                        _, new_value = feasible_j[subset]
+                        _, new_bin_value = feasible_j[subset]
                         new_mask = prev_mask | subset
+                        new_values = prev_values + (new_bin_value,)
                         
-                        new_max = max(prev_max, new_value)
-                        new_min = min(prev_min, new_value)
-                        new_diff = new_max - new_min
+                        # Compute difference for this partial assignment
+                        new_diff = max(new_values) - min(new_values)
                         
-                        # Check if this is better
+                        # Check if this is better than existing state
+                        should_update = False
                         if new_mask not in dp[j]:
-                            new_assign = prev_assign + [self._mask_to_items(subset, items)]
-                            dp[j][new_mask] = (new_max, new_min, new_assign)
+                            should_update = True
                         else:
-                            old_max, old_min, _ = dp[j][new_mask]
-                            old_diff = old_max - old_min
-                            
+                            old_values, _ = dp[j][new_mask]
+                            old_diff = max(old_values) - min(old_values)
                             if new_diff < old_diff:
-                                new_assign = prev_assign + [self._mask_to_items(subset, items)]
-                                dp[j][new_mask] = (new_max, new_min, new_assign)
+                                should_update = True
+                        
+                        if should_update:
+                            new_assign = prev_assign + [self._mask_to_items(subset, items)]
+                            dp[j][new_mask] = (new_values, new_assign)
                     
                     # Next subset of remaining (or break if we've done empty set)
                     if subset == 0:
                         break
                     subset = (subset - 1) & remaining
         
-        # Find best complete partition
-        if full_mask in dp[k]:
-            _, _, assignment = dp[k][full_mask]
-            return assignment
-        
-        # If exact k bins not possible, try with some empty bins
+        # Find best complete partition (all items assigned, all k bins used)
         best_diff = INF
         best_assign = None
         
-        for mask in dp[k]:
-            if mask == full_mask:
-                max_v, min_v, assign = dp[k][mask]
-                diff = max_v - min_v
+        for mask, (values, assign) in dp[k].items():
+            if mask == full_mask:  # All items assigned
+                diff = max(values) - min(values)
                 if diff < best_diff:
                     best_diff = diff
                     best_assign = assign
+                    self._log(f"Found partition with diff={diff:.2f}: values={values}")
         
-        return best_assign
+        if best_assign is not None:
+            self._log(f"Optimal partition found with diff={best_diff:.2f}")
+            return best_assign
+        
+        # Fallback: find any complete partition
+        self._log("No perfect partition found, looking for any valid partition...")
+        for mask in dp[k]:
+            if mask == full_mask:
+                _, assign = dp[k][mask]
+                return assign
+        
+        return None
+    
+    def _extract_best_partial(
+        self,
+        dp: List[Dict],
+        k: int,
+        full_mask: int,
+        items: List[Item]
+    ) -> Optional[List[List[int]]]:
+        """Extract best solution found so far when timeout occurs."""
+        # Look for complete partitions first
+        if full_mask in dp[k]:
+            _, assign = dp[k][full_mask]
+            return assign
+        
+        # Look for best partial in highest completed level
+        for j in range(k, 0, -1):
+            if dp[j]:
+                best_diff = float('inf')
+                best_assign = None
+                for mask, (values, assign) in dp[j].items():
+                    if mask == full_mask:
+                        diff = max(values) - min(values)
+                        if diff < best_diff:
+                            best_diff = diff
+                            best_assign = assign
+                if best_assign:
+                    return best_assign
+        
+        return None
     
     def _find_best_partition(
         self,

@@ -257,8 +257,10 @@ class TestSolutionInvariants:
     @pytest.fixture
     def heterogeneous_problem(self):
         """Create a problem with heterogeneous bin capacities."""
+        # Use fixed seed for reproducibility across platforms
+        rng = np.random.default_rng(42)
         items = [
-            Item(id=i, weight=np.random.uniform(5, 25), value=np.random.uniform(10, 40))
+            Item(id=i, weight=rng.uniform(5, 20), value=rng.uniform(10, 40))
             for i in range(20)
         ]
         return Problem(

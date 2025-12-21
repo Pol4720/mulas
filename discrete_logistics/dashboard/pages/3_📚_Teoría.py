@@ -295,10 +295,14 @@ with tabs[3]:
     st.markdown("---")
     st.markdown("### Complejidades Comparadas")
     
+    st.markdown("""
+    **Notación:** $n$ = ítems, $k$ = bins, $I$ = iteraciones, $G$ = generaciones, $P$ = población
+    """)
+    
     complexity_data = {
         'Algoritmo': ['FFD', 'BFD', 'WFD', 'DP', 'B&B', 'SA', 'GA'],
-        'Tiempo': ['O(n log n)', 'O(n²)', 'O(n log n)', 'O(k·3ⁿ)', 'O(kⁿ) peor', 'O(I·n)', 'O(G·P·n)'],
-        'Espacio': ['O(n)', 'O(n)', 'O(n)', 'O(k·2ⁿ)', 'O(n)', 'O(n)', 'O(P·n)'],
+        'Tiempo': ['O(n log n + n·k)', 'O(n log n + n·k)', 'O(n log n + n log k)', 'O(k·3ⁿ)', 'O(kⁿ) peor', 'O(I·n·k)', 'O(G·P·n)'],
+        'Espacio': ['O(n + k)', 'O(n + k)', 'O(n + k)', 'O(k·2ⁿ)', 'O(n·k)', 'O(n + k)', 'O(P·n)'],
         'Optimalidad': ['No', 'No', 'No', '✅ Óptima', '✅ Óptima', 'Aprox', 'Aprox']
     }
     

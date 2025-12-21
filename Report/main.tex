@@ -376,12 +376,12 @@ Si existiera un algoritmo polinomial para el caso heterogéneo, también resolve
 \toprule
 \textbf{Algoritmo} & \textbf{Tiempo} & \textbf{Espacio} \\
 \midrule
-First Fit Decreasing (FFD) & $O(n \log n)$ & $O(n)$ \\
-Best Fit Decreasing (BFD) & $O(n^2)$ & $O(n)$ \\
-Worst Fit Decreasing (WFD) & $O(n \log n)$ & $O(n)$ \\
-LPT Balanced & $O(n \log n)$ & $O(n)$ \\
-Programación Dinámica & $O(n \cdot C^k)$ & $O(C^k)$ \\
-Branch and Bound & $O(k^n)$ peor caso & $O(n)$ \\
+First Fit Decreasing (FFD) & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
+Best Fit Decreasing (BFD) & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
+Worst Fit Decreasing (WFD) & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+LPT Balanced & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+Programación Dinámica & $O(k \cdot 3^n)$ & $O(k \cdot 2^n)$ \\
+Branch and Bound & $O(k^n)$ peor caso & $O(n \cdot k)$ \\
 Simulated Annealing & $O(I \cdot n)$ & $O(n)$ \\
 Genetic Algorithm & $O(G \cdot P \cdot n)$ & $O(P \cdot n)$ \\
 Tabu Search & $O(I \cdot N)$ & $O(n + T)$ \\
@@ -393,8 +393,7 @@ Tabu Search & $O(I \cdot N)$ & $O(n + T)$ \\
 Donde:
 \begin{itemize}
     \item $n$: número de ítems
-    \item $k$: número de contenedores
-    \item $C$: capacidad de los contenedores
+    \item $k$: número de contenedores (bins)
     \item $I$: número de iteraciones
     \item $G$: número de generaciones
     \item $P$: tamaño de población

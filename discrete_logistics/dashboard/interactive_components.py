@@ -29,7 +29,7 @@ class InteractiveTooltips:
     ALGORITHM_INFO = {
         "First Fit Decreasing": {
             "description": "Ordena ítems por peso decreciente, asigna al primer bin que quepa",
-            "complexity": "O(n log n)",
+            "complexity": "O(n log n + n·k)",
             "type": "Greedy Determinístico",
             "pros": ["Rápido", "Determinístico", "Buen baseline"],
             "cons": ["Puede ser subóptimo", "No considera balance de valores"],
@@ -38,7 +38,7 @@ class InteractiveTooltips:
         },
         "Best Fit Decreasing": {
             "description": "Ordena ítems por peso decreciente, asigna al bin con menor espacio residual",
-            "complexity": "O(n² log n)",
+            "complexity": "O(n log n + n·k)",
             "type": "Greedy Determinístico",
             "pros": ["Mejor empaquetado", "Minimiza espacio desperdiciado"],
             "cons": ["Más lento que FFD", "Puede crear desbalance"],
@@ -47,7 +47,7 @@ class InteractiveTooltips:
         },
         "Worst Fit Decreasing": {
             "description": "Ordena ítems por peso decreciente, asigna al bin con mayor espacio libre",
-            "complexity": "O(n² log n)",
+            "complexity": "O(n log n + n log k)",
             "type": "Greedy Determinístico",
             "pros": ["Distribuye mejor la carga", "Favorece el balance"],
             "cons": ["Puede desperdiciar espacio", "No siempre óptimo"],
@@ -92,7 +92,7 @@ class InteractiveTooltips:
         },
         "Branch and Bound": {
             "description": "Método exacto con poda inteligente del árbol de búsqueda",
-            "complexity": "O(2^n) worst case",
+            "complexity": "O(kⁿ) worst case",
             "type": "Exacto Óptimo",
             "pros": ["Solución óptima garantizada", "Poda eficiente"],
             "cons": ["Exponencial en peor caso", "Solo instancias pequeñas"],
@@ -100,11 +100,11 @@ class InteractiveTooltips:
             "color": "#3B82F6"
         },
         "Dynamic Programming": {
-            "description": "Programación dinámica con memorización",
-            "complexity": "O(n × W × k)",
+            "description": "Programación dinámica exacta con enumeración de subconjuntos",
+            "complexity": "O(k · 3ⁿ)",
             "type": "Exacto Óptimo",
-            "pros": ["Óptimo", "Eficiente para instancias medianas"],
-            "cons": ["Memoria O(W×k)", "Pseudo-polinomial"],
+            "pros": ["Óptimo garantizado", "Explora todas las particiones"],
+            "cons": ["Memoria O(k·2ⁿ)", "Solo para n ≤ 15"],
             "icon": "📊",
             "color": "#14B8A6"
         }

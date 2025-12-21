@@ -482,6 +482,15 @@ class TestRobustness:
             assert non_empty == 1, f"Expected 1 non-empty bin, got {non_empty}"
 
 
+# Check if streamlit is available for dashboard tests
+try:
+    import streamlit
+    HAS_STREAMLIT = True
+except ImportError:
+    HAS_STREAMLIT = False
+
+
+@pytest.mark.skipif(not HAS_STREAMLIT, reason="Streamlit not installed")
 class TestDashboardIntegration:
     """Tests for dashboard integration correctness."""
     

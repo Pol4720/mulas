@@ -19,6 +19,17 @@ Objective:
 
 $$\min z = \max_{j=1}^{k} \sum_{i=1}^{n} v_i \cdot x_{ij} - \min_{j=1}^{k} \sum_{i=1}^{n} v_i \cdot x_{ij}$$
 
+Here, the decision variable $x_{ij}$ indicates whether item `i` is assigned to bin `j`:
+
+$$
+x_{ij} = \begin{cases}
+1 & \text{if item } i \text{ is assigned to bin } j, \\
+0 & \text{otherwise.}
+\end{cases}
+$$
+
+The variables are binary, i.e. $x_{ij} \in \{0,1\}$.
+
 Subject to:
 - Each item assigned to exactly one bin
 - Capacity constraints: $\sum_i w_i \cdot x_{ij} \leq C$

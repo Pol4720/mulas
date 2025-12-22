@@ -228,7 +228,7 @@ This project is licensed under the MIT License.
   title = {Balanced Multi-Bin Packing with Capacity Constraints},
   author = {DAA Project},
   year = {2024},
-  url = {https://github.com/your-repo/mulas}
+  url = {https://github.com/Pol4720/mulas}
 }
 ```
 Final DAA project in Computer Science Degree

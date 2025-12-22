@@ -32,6 +32,11 @@ The variables are binary, i.e. $x_{ij} \in \{0,1\}$.
 
 Subject to:
 - Each item assigned to exactly one bin
+
+$$
+\forall\; i\in\{1,\dots,n\}:\qquad \sum_{j=1}^{k} x_{ij} = 1
+$$
+
 - Capacity constraints: $\sum_i w_i \cdot x_{ij} \leq C$
 
 ## 🚀 Features

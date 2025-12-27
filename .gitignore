@@ -218,3 +218,5 @@ __marimo__/
 *.log
 *.pdf
 build/
+
+to-do.txt

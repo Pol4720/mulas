@@ -636,3 +636,362 @@ class InstanceGenerator:
             problems.append(self.load_instance(filepath))
         
         return problems
+    
+    # =========================================================================
+    # Edge Cases and Pathological Instances
+    # =========================================================================
+    
+    def generate_perfect_balance(
+        self,
+        num_bins: int,
+        items_per_bin: int = 3,
+        value_per_bin: float = 100.0,
+        name: Optional[str] = None
+    ) -> Problem:
+        """
+        Generate instance where perfect balance (diff=0) is achievable.
+        
+        Creates items such that they can be perfectly partitioned among bins
+        with equal total value per bin. Useful for testing if algorithms
+        can find the global optimum.
+        
+        Args:
+            num_bins: Number of bins
+            items_per_bin: Items designed for each bin
+            value_per_bin: Target value sum per bin
+            name: Instance name
+            
+        Returns:
+            Problem instance with achievable perfect balance
+        """
+        items = []
+        n_items = num_bins * items_per_bin
+        
+        for bin_idx in range(num_bins):
+            # Create items for this bin that sum to value_per_bin
+            remaining_value = value_per_bin
+            for j in range(items_per_bin):
+                if j < items_per_bin - 1:
+                    # Random portion of remaining
+                    value = self.rng.uniform(0.2, 0.5) * remaining_value
+                else:
+                    # Last item gets the rest
+                    value = remaining_value
+                
+                remaining_value -= value
+                weight = self.rng.uniform(5, 15)
+                
+                items.append(Item(
+                    id=len(items),
+                    weight=float(weight),
+                    value=float(value)
+                ))
+        
+        # Shuffle to avoid trivial ordering
+        self.rng.shuffle(items)
+        # Reassign IDs after shuffle
+        for i, item in enumerate(items):
+            item._id = i
+        
+        # Capacity to fit all items easily
+        total_weight = sum(item.weight for item in items)
+        capacity = total_weight / num_bins * 1.5
+        
+        instance_name = name or f"perfect_balance_k{num_bins}_n{n_items}"
+        
+        return Problem(
+            items=items,
+            num_bins=num_bins,
+            bin_capacities=[float(capacity)] * num_bins,
+            name=instance_name
+        )
+    
+    def generate_impossible_balance(
+        self,
+        num_bins: int,
+        n_items: int = 10,
+        name: Optional[str] = None
+    ) -> Problem:
+        """
+        Generate instance where perfect balance is impossible.
+        
+        Creates one item with value much larger than all others combined,
+        guaranteeing a non-zero optimal difference.
+        
+        Args:
+            num_bins: Number of bins
+            n_items: Number of items
+            name: Instance name
+            
+        Returns:
+            Problem instance where diff > 0 is unavoidable
+        """
+        items = []
+        
+        # One dominant item
+        items.append(Item(
+            id=0,
+            weight=20.0,
+            value=1000.0  # Much larger than others
+        ))
+        
+        # Rest are small
+        for i in range(1, n_items):
+            items.append(Item(
+                id=i,
+                weight=self.rng.uniform(5, 15),
+                value=self.rng.uniform(10, 50)
+            ))
+        
+        capacity = sum(item.weight for item in items) / num_bins * 2.0
+        
+        instance_name = name or f"impossible_balance_k{num_bins}_n{n_items}"
+        
+        return Problem(
+            items=items,
+            num_bins=num_bins,
+            bin_capacities=[float(capacity)] * num_bins,
+            name=instance_name
+        )
+    
+    def generate_tight_capacity(
+        self,
+        n_items: int,
+        num_bins: int,
+        slack_factor: float = 0.05,
+        name: Optional[str] = None
+    ) -> Problem:
+        """
+        Generate instance with very tight capacity constraints.
+        
+        Items almost fill bins completely, making many assignments infeasible.
+        Tests algorithm behavior under pressure.
+        
+        Args:
+            n_items: Number of items
+            num_bins: Number of bins
+            slack_factor: How much extra capacity (0.05 = 5% slack)
+            name: Instance name
+            
+        Returns:
+            Problem instance with tight capacities
+        """
+        weights = self.rng.uniform(10, 50, n_items)
+        values = self.rng.uniform(10, 50, n_items)
+        
+        total_weight = weights.sum()
+        capacity_per_bin = total_weight / num_bins * (1 + slack_factor)
+        
+        # Ensure at least one item fits in each bin
+        capacity_per_bin = max(capacity_per_bin, weights.max() + 1)
+        
+        items = [
+            Item(id=i, weight=float(w), value=float(v))
+            for i, (w, v) in enumerate(zip(weights, values))
+        ]
+        
+        instance_name = name or f"tight_cap_n{n_items}_k{num_bins}_s{slack_factor:.2f}"
+        
+        return Problem(
+            items=items,
+            num_bins=num_bins,
+            bin_capacities=[float(capacity_per_bin)] * num_bins,
+            name=instance_name
+        )
+    
+    def generate_single_large_item(
+        self,
+        n_items: int,
+        num_bins: int,
+        large_item_fraction: float = 0.4,
+        name: Optional[str] = None
+    ) -> Problem:
+        """
+        Generate instance with one item taking significant capacity.
+        
+        Tests handling of items that dominate bin capacity/value.
+        
+        Args:
+            n_items: Number of items
+            num_bins: Number of bins
+            large_item_fraction: Fraction of total capacity for large item
+            name: Instance name
+            
+        Returns:
+            Problem instance with one dominant item
+        """
+        # Small items
+        small_weights = self.rng.uniform(5, 15, n_items - 1)
+        small_values = self.rng.uniform(10, 30, n_items - 1)
+        
+        # Large item
+        total_small_weight = small_weights.sum()
+        large_weight = total_small_weight * large_item_fraction / (1 - large_item_fraction)
+        large_value = sum(small_values) * large_item_fraction / (1 - large_item_fraction)
+        
+        weights = np.append([large_weight], small_weights)
+        values = np.append([large_value], small_values)
+        
+        total_weight = weights.sum()
+        capacity = total_weight / num_bins * 1.3
+        capacity = max(capacity, large_weight + 1)  # Must fit the large item
+        
+        items = [
+            Item(id=i, weight=float(w), value=float(v))
+            for i, (w, v) in enumerate(zip(weights, values))
+        ]
+        
+        instance_name = name or f"single_large_n{n_items}_k{num_bins}"
+        
+        return Problem(
+            items=items,
+            num_bins=num_bins,
+            bin_capacities=[float(capacity)] * num_bins,
+            name=instance_name
+        )
+    
+    def generate_3partition_instance(
+        self,
+        m: int,
+        B: int = 100,
+        name: Optional[str] = None
+    ) -> Problem:
+        """
+        Generate 3-PARTITION style instance.
+        
+        Creates 3m items where perfect partition into m groups of 3 exists.
+        Based on the NP-complete 3-PARTITION problem.
+        
+        Reference: Garey & Johnson (1979)
+        
+        Args:
+            m: Number of bins (groups)
+            B: Target sum per group
+            name: Instance name
+            
+        Returns:
+            Problem instance modeling 3-PARTITION
+        """
+        items = []
+        
+        for group in range(m):
+            # Generate 3 items that sum to B
+            # Using constraint: B/4 < a_i < B/2
+            a1 = self.rng.uniform(B/4 + 1, B/2 - 1)
+            a2 = self.rng.uniform(B/4 + 1, min(B/2 - 1, B - a1 - B/4 - 1))
+            a3 = B - a1 - a2
+            
+            # Ensure constraint is satisfied
+            if a3 <= B/4 or a3 >= B/2:
+                # Retry with fixed values
+                a1 = B/3 + self.rng.uniform(-B/20, B/20)
+                a2 = B/3 + self.rng.uniform(-B/20, B/20)
+                a3 = B - a1 - a2
+            
+            for val in [a1, a2, a3]:
+                items.append(Item(
+                    id=len(items),
+                    weight=float(val),  # weight = value for 3-PARTITION
+                    value=float(val)
+                ))
+        
+        # Shuffle items
+        self.rng.shuffle(items)
+        for i, item in enumerate(items):
+            item._id = i
+        
+        instance_name = name or f"3partition_m{m}_B{B}"
+        
+        return Problem(
+            items=items,
+            num_bins=m,
+            bin_capacities=[float(B)] * m,  # Exact capacity = B
+            name=instance_name
+        )
+    
+    def generate_makespan_hard(
+        self,
+        n_items: int,
+        num_bins: int,
+        name: Optional[str] = None
+    ) -> Problem:
+        """
+        Generate instance hard for makespan scheduling.
+        
+        Based on LPT worst-case constructions from Graham (1969).
+        
+        Args:
+            n_items: Number of items
+            num_bins: Number of bins
+            name: Instance name
+            
+        Returns:
+            Problem instance challenging for LPT
+        """
+        # LPT worst case: items of sizes 2k-1, 2k-1, 2k for k machines
+        # Generalized for arbitrary n
+        k = num_bins
+        
+        values = []
+        for i in range(n_items):
+            if i < 2 * k:
+                values.append(2 * k - 1)
+            else:
+                values.append(2 * k)
+        
+        # Add some randomness
+        values = np.array(values, dtype=float)
+        values += self.rng.uniform(-0.5, 0.5, n_items)
+        
+        weights = self.rng.uniform(10, 30, n_items)
+        total_weight = weights.sum()
+        capacity = total_weight / num_bins * 1.5
+        
+        items = [
+            Item(id=i, weight=float(w), value=float(v))
+            for i, (w, v) in enumerate(zip(weights, values))
+        ]
+        
+        instance_name = name or f"makespan_hard_n{n_items}_k{num_bins}"
+        
+        return Problem(
+            items=items,
+            num_bins=num_bins,
+            bin_capacities=[float(capacity)] * num_bins,
+            name=instance_name
+        )
+    
+    def generate_test_suite_for_brute_force(
+        self,
+        max_items: int = 12,
+        num_bins_options: List[int] = [2, 3, 4]
+    ) -> List[Problem]:
+        """
+        Generate test suite suitable for brute force comparison.
+        
+        Creates small instances that brute force can solve optimally.
+        
+        Args:
+            max_items: Maximum number of items (keep small for brute force)
+            num_bins_options: List of bin counts to test
+            
+        Returns:
+            List of small problem instances
+        """
+        problems = []
+        
+        for n in [6, 8, 10, max_items]:
+            for k in num_bins_options:
+                if k >= n:
+                    continue
+                
+                # Various instance types
+                problems.append(self.generate_uniform(n, k, name=f"bf_uniform_n{n}_k{k}"))
+                problems.append(self.generate_perfect_balance(k, n // k, name=f"bf_perfect_n{n}_k{k}"))
+                problems.append(self.generate_tight_capacity(n, k, slack_factor=0.1, name=f"bf_tight_n{n}_k{k}"))
+                problems.append(self.generate_correlated(n, k, correlation=0.8, name=f"bf_corr_n{n}_k{k}"))
+                
+                if n >= 9 and k <= 3:
+                    problems.append(self.generate_3partition_instance(k, name=f"bf_3part_n{3*k}_k{k}"))
+        
+        return problems

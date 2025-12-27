@@ -35,17 +35,23 @@ class DynamicProgramming(Algorithm):
     suitable for small instances.
     
     Complexity Analysis:
-    - Time: O(k * 3^n) in worst case (subset enumeration)
+    - Time: O(k^2 * 3^n) in worst case
+      - k * 3^n iterations (subset enumeration over k levels)
+      - O(k) per iteration (computing max/min over value tuple)
     - Space: O(k * 2^n) for memoization
     - Approximation: Optimal (exact algorithm)
     
     The algorithm works by:
     1. Generate all possible subsets of items for each bin
-    2. Filter subsets that satisfy weight constraint
+    2. Filter subsets that satisfy weight constraint (heterogeneous capacities)
     3. Use DP to find k-partition minimizing value difference
     
-    State: dp[mask] = list of (value_tuple) where mask represents
-    assigned items and value_tuple is values for bins 0..k-1
+    State: dp[j][mask] = (value_tuple, assignment) where:
+    - mask represents assigned items
+    - value_tuple is (V_1, ..., V_j) values for bins 0..j-1
+    
+    Note: We store the full value tuple (not just max/min) because with
+    heterogeneous capacities, feasibility depends on the specific bin.
     
     PRACTICAL LIMITS (for reasonable execution time):
     - n ≤ 12: Fast (< 1 second)
@@ -53,7 +59,7 @@ class DynamicProgramming(Algorithm):
     - n > 15: Falls back to greedy (too slow)
     """
     
-    time_complexity = "O(k · 3^n)"
+    time_complexity = "O(k² · 3^n)"
     space_complexity = "O(k · 2^n)"
     approximation_ratio = "Optimal (exact)"
     description = "Exact algorithm using dynamic programming, feasible only for small instances"
@@ -361,90 +367,6 @@ class DynamicProgramming(Algorithm):
                     return best_assign
         
         return None
-    
-    def _find_best_partition(
-        self,
-        items: List[Item],
-        k: int,
-        feasible: Dict[int, Tuple[float, float]]
-    ) -> Optional[List[List[int]]]:
-        """
-        Find the best k-partition using DP.
-        
-        Returns:
-            List of k lists, each containing item IDs for that bin
-            Returns None if no feasible partition exists
-        """
-        n = len(items)
-        full_mask = (1 << n) - 1
-        
-        # dp[j][mask] = (best_max, best_min, assignment)
-        # j = number of bins used
-        # mask = items assigned so far
-        # assignment = list of sets for each bin
-        
-        INF = float('inf')
-        
-        # Initialize: 1 bin
-        dp = [{} for _ in range(k + 1)]
-        
-        for mask, (weight, value) in feasible.items():
-            dp[1][mask] = (value, value, [[self._mask_to_items(mask, items)]])
-        
-        # DP transition: add bins one by one
-        for j in range(2, k + 1):
-            self._log(f"DP: Processing {j} bins...")
-            
-            for prev_mask in dp[j - 1]:
-                prev_max, prev_min, prev_assign = dp[j - 1][prev_mask]
-                remaining = full_mask ^ prev_mask  # Items not yet assigned
-                
-                # Try all feasible subsets of remaining items
-                subset = remaining
-                while subset > 0:
-                    self._iterations += 1
-                    
-                    if subset in feasible:
-                        _, new_value = feasible[subset]
-                        new_mask = prev_mask | subset
-                        
-                        new_max = max(prev_max, new_value)
-                        new_min = min(prev_min, new_value)
-                        new_diff = new_max - new_min
-                        
-                        # Check if this is better
-                        if new_mask not in dp[j]:
-                            new_assign = prev_assign + [self._mask_to_items(subset, items)]
-                            dp[j][new_mask] = (new_max, new_min, new_assign)
-                        else:
-                            old_max, old_min, _ = dp[j][new_mask]
-                            old_diff = old_max - old_min
-                            
-                            if new_diff < old_diff:
-                                new_assign = prev_assign + [self._mask_to_items(subset, items)]
-                                dp[j][new_mask] = (new_max, new_min, new_assign)
-                    
-                    # Next subset of remaining
-                    subset = (subset - 1) & remaining
-        
-        # Find best complete partition
-        if full_mask in dp[k]:
-            _, _, assignment = dp[k][full_mask]
-            return assignment
-        
-        # If exact k bins not possible, try with some empty bins
-        best_diff = INF
-        best_assign = None
-        
-        for mask in dp[k]:
-            if mask == full_mask:
-                max_v, min_v, assign = dp[k][mask]
-                diff = max_v - min_v
-                if diff < best_diff:
-                    best_diff = diff
-                    best_assign = assign
-        
-        return best_assign
     
     def _mask_to_items(self, mask: int, items: List[Item]) -> List[int]:
         """Convert bitmask to list of item IDs."""

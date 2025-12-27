@@ -13,6 +13,7 @@ try:
     )
     from .dynamic_programming import DynamicProgramming
     from .branch_and_bound import BranchAndBound
+    from .brute_force import BruteForce, ExhaustiveSearch
     from .metaheuristics import (
         SimulatedAnnealing,
         GeneticAlgorithm,
@@ -33,6 +34,7 @@ except ImportError:
     )
     from discrete_logistics.algorithms.dynamic_programming import DynamicProgramming
     from discrete_logistics.algorithms.branch_and_bound import BranchAndBound
+    from discrete_logistics.algorithms.brute_force import BruteForce, ExhaustiveSearch
     from discrete_logistics.algorithms.metaheuristics import (
         SimulatedAnnealing,
         GeneticAlgorithm,
@@ -53,6 +55,8 @@ __all__ = [
     "LargestDifferenceFirst",
     "DynamicProgramming",
     "BranchAndBound",
+    "BruteForce",
+    "ExhaustiveSearch",
     "SimulatedAnnealing",
     "GeneticAlgorithm",
     "TabuSearch",

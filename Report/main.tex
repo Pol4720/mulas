@@ -217,7 +217,7 @@ Demostraremos que BALANCED-BIN-PACKING-DEC $\in$ NP-completo mediante dos pasos:
 
 \textbf{Paso 1: BALANCED-BIN-PACKING-DEC $\in$ NP}
 
-Un certificado para una instancia con respuesta "sí" es una asignación $\sigma: I \rightarrow \{1, \ldots, k\}$. La verificación requiere:
+Un certificado para una instancia con respuesta 'sí' es una asignación $\sigma: I \rightarrow \{1, \ldots, k\}$. La verificación requiere:
 \begin{enumerate}
     \item Verificar que cada ítem está asignado: $O(n)$
     \item Calcular peso total de cada bin: $O(n)$
@@ -245,7 +245,7 @@ PARTITION $\leq_p$ 3-PARTITION $\leq_p$ BIN PACKING $\leq_p$ BALANCED-BIN-PACKIN
 
 \vspace{0.5cm}
 
-\textit{(Cada flecha representa una reducción en tiempo polinomial)}
+
 \end{center}
 
 \subsubsection{Problema PARTITION (Punto de Partida)}
@@ -345,15 +345,12 @@ Si existiera un algoritmo polinomial para BALANCED-BIN-PACKING-OPT, podríamos r
 \begin{enumerate}
     \item Ejecutar el algoritmo de optimización
     \item Comparar el resultado con $B$
-    \item Responder "sí" si resultado $\leq B$, "no" en caso contrario
+    \item Responder 'sí' si resultado $\leq B$, 'no' en caso contrario
 \end{enumerate}
 
 Como BALANCED-BIN-PACKING-DEC es NP-completo, esto implicaría P = NP. $\square$
 \end{proof}
 
-\begin{corollary}[Inaproximabilidad]
-Bajo la hipótesis P $\neq$ NP, no existe un esquema de aproximación en tiempo polinomial (PTAS) para BALANCED-BIN-PACKING a menos que se cumplan condiciones adicionales sobre la estructura de las instancias.
-\end{corollary}
 
 \subsection{Problema con Capacidades Heterogéneas}
 
@@ -520,7 +517,9 @@ Número de subproblemas: $O(k \cdot 2^n)$
 Para cada subproblema $DP[j][mask]$, consideramos todos los subconjuntos $S$ de los ítems restantes que son factibles para el contenedor $j$:
 
 \[
-DP[j][mask \cup S] = \min_{\substack{S \subseteq remaining \\ S \in Factible(j)}} \left\{ \max\left(DP[j-1][mask].V_{max}, V(S)\right) - \min\left(DP[j-1][mask].V_{min}, V(S)\right) \right\}
+DP[j][mask \cup S] = \min_{\substack{S \subseteq remaining \\ S \in Factible(j)}} \]
+
+\[\left\{ \max\left(DP[j-1][mask].V_{max}, V(S)\right) - \min\left(DP[j-1][mask].V_{min}, V(S)\right) \right\}
 \]
 
 donde:
@@ -831,27 +830,6 @@ Los experimentos se realizaron con las siguientes configuraciones:
     \item Límite de tiempo: 60 segundos por ejecución
 \end{itemize}
 
-\subsection{Resultados Comparativos}
-
-\begin{table}[H]
-\centering
-\caption{Comparación de algoritmos en instancias medianas (n=30, k=5)}
-\begin{tabular}{lcccc}
-\toprule
-\textbf{Algoritmo} & \textbf{Obj. Medio} & \textbf{Tiempo (s)} & \textbf{Factible \%} \\
-\midrule
-FFD & 15.23 & 0.001 & 100 \\
-BFD & 14.87 & 0.002 & 100 \\
-WFD & 12.45 & 0.001 & 100 \\
-LPT & 8.32 & 0.001 & 100 \\
-Simulated Annealing & 5.67 & 2.34 & 100 \\
-Genetic Algorithm & 4.89 & 5.67 & 100 \\
-Tabu Search & 5.12 & 1.89 & 100 \\
-Branch \& Bound & 3.45 & 45.2 & 85 \\
-\bottomrule
-\end{tabular}
-\label{tab:results}
-\end{table}
 
 \subsection{Análisis de Escalabilidad}
 
@@ -867,7 +845,7 @@ Este proyecto presenta una implementación completa y un análisis exhaustivo de
 
 \begin{enumerate}
     \item Formalización matemática rigurosa del problema como ILP
-    \item Demostración de NP-hardness mediante reducción desde 3-PARTITION
+    \item Demostración de NP-hardness mediante reducción desde PARTITION
     \item Implementación de 9 algoritmos con diferentes enfoques
     \item Framework de benchmarking con análisis estadístico
     \item Dashboard interactivo para experimentación

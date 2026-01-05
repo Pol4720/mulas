@@ -402,7 +402,7 @@ Dado que $v_i = w_i$ y el bin tiene capacidad $B$, cada bin también tiene peso 
 
 Las restricciones $\frac{B}{4} < a_i < \frac{B}{2}$ garantizan que:
 \begin{itemize}
-    \item Ningún bin puede tener menos de 3 elementos (ya que $3 \times \frac{B}{4} > \frac{3B}{4}$ pero necesitamos llegar a $B$)
+    \item Ningún bin puede tener menos de 3 elementos (pues $a_i < \frac{B}{2}$, así que la suma de dos elementos es $< B$ y se requieren al menos 3 para alcanzar $B$)
     \item Ningún bin puede tener más de 3 elementos (ya que $4 \times \frac{B}{4} = B$ pero cada elemento es $> \frac{B}{4}$)
 \end{itemize}
 

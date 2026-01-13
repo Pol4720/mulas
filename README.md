@@ -9,7 +9,7 @@ A comprehensive Python implementation for solving the **Balanced Multi-Bin Packi
 
 Given:
 - A set of **n items**, each with weight $w_i$ and value $v_i$
-- **k bins** with capacity $C$
+- **k bins** with capacities $C_1, \ldots, C_k$ (each bin may have a different capacity)
 
 Objective:
 - Minimize the **maximum difference** in total values between bins
@@ -34,10 +34,10 @@ Subject to:
 - Each item assigned to exactly one bin
 
 $$
-\forall\; i\in\{1,\dots,n\}:\qquad \sum_{j=1}^{k} x_{ij} = 1
+\forall\; i\in\{1,\dots,n\}:	\qquad \sum_{j=1}^{k} x_{ij} = 1
 $$
 
-- Capacity constraints: $\sum_i w_i \cdot x_{ij} \leq C$
+- Capacity constraints: $\sum_i w_i \cdot x_{ij} \leq C_j$ for each bin $j=1,\dots,k$
 
 ## 🚀 Features
 
@@ -93,7 +93,7 @@ items = [
 problem = Problem(
     items=items,
     num_bins=2,
-    bin_capacity=30,
+    bin_capacities=[30, 30],  # capacities per bin (heterogeneous allowed)
     name="example"
 )
 

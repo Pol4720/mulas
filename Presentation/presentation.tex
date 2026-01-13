@@ -1,0 +1,433 @@
+\documentclass[10pt,aspectratio=169]{beamer}
+
+% Paquetes esenciales
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath,amsfonts,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage{booktabs}
+
+% Tema y colores
+\usetheme{Madrid}
+\usecolortheme{default}
+
+% Colores personalizados
+\definecolor{CustomBlue}{RGB}{0, 102, 204}
+\definecolor{CustomGreen}{RGB}{0, 153, 76}
+
+\setbeamercolor{structure}{fg=CustomBlue}
+
+% Título y autor
+\title{Problema de Transporte Logístico Discreto}
+\subtitle{Diseño y Análisis de Algoritmos}
+\author{R. A. Matos Arderí \\ A. Ponce González \\ A. Romero Imbert}
+\institute{Facultad de Matemática y Computación}
+\date{\today}
+
+% Macros útiles
+\newcommand{\highlight}[1]{\textcolor{CustomBlue}{\textbf{#1}}}
+
+\begin{document}
+
+%=== PORTADA ===
+\frame{\titlepage}
+
+%=== ÍNDICE ===
+\begin{frame}
+\frametitle{Contenidos}
+\tableofcontents[hideallsubsections]
+\end{frame}
+
+%=== SECCIÓN 1: PROBLEMA ===
+\section{El Problema}
+
+\begin{frame}
+\frametitle{Descripción del Problema}
+
+\textbf{Escenario Real:}
+\begin{itemize}
+    \item \highlight{n} paquetes con peso y valor
+    \item \highlight{k} vehículos con capacidad máxima
+    \item Distribuir respetando límites de capacidad
+    \item \textbf{Objetivo:} Equilibrar la carga
+\end{itemize}
+
+\vspace{0.5cm}
+\textbf{Ejemplo Simple:}
+\begin{itemize}
+    \item 5 paquetes: 2kg, 3kg, 4kg, 1kg, 2kg
+    \item 2 camiones: 6kg cada uno
+    \item Desafío: distribución equitativa
+\end{itemize}
+
+\vspace{0.7cm}
+\centering
+\textbf{[ESPACIO PARA ILUSTRACIÓN: Camiones y paquetes]}
+
+\end{frame}
+
+%=== SECCIÓN 2: FORMALIZACIÓN ===
+\section{Formalización Matemática}
+
+\begin{frame}
+\frametitle{Definiciones Fundamentales}
+
+\textbf{Entrada del Problema:}
+\begin{itemize}
+    \item Ítems: $I = \{1, 2, \ldots, n\}$
+    \item Pesos: $w_i > 0$ para cada ítem $i$
+    \item Valores: $v_i \geq 0$ para cada ítem $i$
+    \item $k$ contenedores con capacidades $C_1, \ldots, C_k$
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Variables de Decisión:}
+\[
+x_{ij} = \begin{cases} 1 & \text{si ítem } i \text{ va a contenedor } j \\ 0 & \text{en otro caso} \end{cases}
+\]
+
+\vspace{0.3cm}
+\textbf{Objetivo:}
+\[
+\text{Minimizar: } \max_j V_j - \min_j V_j
+\]
+donde $V_j = \sum_{i=1}^{n} v_i \cdot x_{ij}$
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Formulación como Programa Lineal Entero}
+
+\textbf{Planteo ILP:}
+
+\begin{align*}
+\text{minimizar} \quad & z^+ - z^- \\
+\text{s.a.:} \quad & \sum_{j=1}^{k} x_{ij} = 1, \quad \forall i \\
+& \sum_{i=1}^{n} w_i \cdot x_{ij} \leq C_j, \quad \forall j \\
+& \sum_{i=1}^{n} v_i \cdot x_{ij} \leq z^+, \quad \forall j \\
+& \sum_{i=1}^{n} v_i \cdot x_{ij} \geq z^-, \quad \forall j \\
+& x_{ij} \in \{0, 1\}
+\end{align*}
+
+\textbf{Propiedad:} En optimalidad: $z^+ = \max_j V_j$ y $z^- = \min_j V_j$
+
+\end{frame}
+
+%=== SECCIÓN 3: COMPLEJIDAD ===
+\section{Análisis de Complejidad}
+
+\begin{frame}
+\frametitle{Problema de Decisión vs Optimización}
+
+\textbf{Problema de Decisión:}
+\begin{quote}
+Existe asignación factible con desbalance $\leq B$?
+\end{quote}
+
+\vspace{0.5cm}
+\textbf{Problema de Optimización:}
+\begin{quote}
+Minimizar el desbalance.
+\end{quote}
+
+\vspace{0.5cm}
+\highlight{Resultado:} El problema es \textbf{NP-Completo}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Cadena de Reducciones}
+
+\centering
+\Large
+\vspace{1cm}
+PARTITION $\rightarrow$ 3-PARTITION $\rightarrow$ BALANCED-BIN-PACKING
+
+\vspace{1cm}
+\normalsize
+\textbf{Implicación:} El problema es \textbf{NP-Hard}
+
+\vspace{0.5cm}
+No existe algoritmo polinomial conocido (asumiendo P $\neq$ NP)
+
+\vspace{0.5cm}
+Se requiere trade-off: \highlight{optimalidad vs velocidad}
+
+\end{frame}
+
+%=== SECCIÓN 4: MÉTODOS ===
+\section{Métodos de Resolución}
+
+\begin{frame}
+\frametitle{Clasificación de Algoritmos}
+
+\centering
+\small
+\begin{tabular}{|l|c|c|c|}
+\toprule
+\textbf{Método} & \textbf{Óptimo} & \textbf{Velocidad} & \textbf{Rango} \\
+\midrule
+\textbf{Exactos:} \\
+Fuerza Bruta & Sí & Lenta & $n < 15$ \\
+Branch \& Bound & Sí & Media & $n < 25$ \\
+Prog. Dinámica & Sí & Media & $n < 20$ \\
+\midrule
+\textbf{Aproximados:} \\
+Greedy (FFD/LPT) & No & Muy rápida & Todos \\
+\midrule
+\textbf{Metaheurísticas:} \\
+Simulated Annealing & No & Rápida & Todos \\
+Algoritmos Genéticos & No & Rápida & Todos \\
+Búsqueda Tabú & No & Rápida & Todos \\
+\bottomrule
+\end{tabular}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Algoritmos Greedy}
+
+\textbf{First Fit Decreasing (FFD):}
+\begin{enumerate}
+    \item Ordenar ítems por peso (descendente)
+    \item Asignar al primer contenedor con espacio
+\end{enumerate}
+
+\textbf{Complejidad:} $O(n \log n)$
+
+\vspace{0.5cm}
+\textbf{LPT Balanced:}
+\begin{enumerate}
+    \item Ordenar ítems por valor (descendente)
+    \item Asignar al contenedor con menos carga
+\end{enumerate}
+
+\textbf{Complejidad:} $O(n \log n)$
+
+\vspace{0.3cm}
+\highlight{Ventajas:} Muy rápidos, buenos resultados
+
+\highlight{Desventajas:} No garantizan optimalidad
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Fuerza Bruta}
+
+Probar las $k^n$ asignaciones posibles.
+
+\vspace{0.5cm}
+\textbf{Límites prácticos:}
+\begin{itemize}
+    \item $k=2$: hasta $n=14$ (1 segundo)
+    \item $k=3$: hasta $n=11$ (1 segundo)
+    \item $k=4$: hasta $n=8$ (1 segundo)
+\end{itemize}
+
+\vspace{0.5cm}
+\textbf{Complejidad:} $O(k^n \cdot n)$
+
+\vspace{0.3cm}
+\textbf{Rol:} Validar heurísticas, instancias pequeñas
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Branch and Bound}
+
+\textbf{Idea:} Fuerza Bruta + poda inteligente
+
+\vspace{0.3cm}
+Explora árbol de decisiones calculando cotas inferiores.
+
+\vspace{0.3cm}
+Si cota $\geq$ mejor solución: \highlight{poda la rama}
+
+\vspace{0.5cm}
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Garantiza optimalidad
+    \item Mejora significativa en práctica
+    \item Efectivo con cotas ajustadas
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Complejidad:} $O(k^n)$ peor caso
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Programación Dinámica}
+
+\textbf{Idea:} Construir solución bin por bin.
+
+\vspace{0.3cm}
+\textbf{Estado:} $DP[j][mask]$ = mejor asignación de ítems en $mask$ a primeros $j$ contenedores
+
+\vspace{0.3cm}
+\textbf{Transición:} Probar subconjuntos del contenedor $j$
+
+\vspace{0.5cm}
+\textbf{Complejidad:}
+\begin{itemize}
+    \item Tiempo: $O(k^2 \cdot 3^n)$
+    \item Espacio: $O(k \cdot 2^n)$
+\end{itemize}
+
+\textbf{Aplicabilidad:} Instancias pequeñas ($n < 20$)
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Metaheurísticas}
+
+Simulated Annealing, Algoritmos Genéticos, Búsqueda Tabú
+
+\vspace{0.5cm}
+\textbf{Esquema general:}
+\begin{enumerate}
+    \item Generar solución inicial
+    \item Mejorar iterativamente con movimientos locales
+    \item Aceptar movimientos malos ocasionalmente
+    \item Detener por convergencia o tiempo
+\end{enumerate}
+
+\vspace{0.5cm}
+\textbf{Ventajas:} Rápidas, buenos resultados
+
+\textbf{Desventajas:} Sin garantías, aleatoriedad, parámetros
+
+\end{frame}
+
+%=== SECCIÓN 5: ANÁLISIS ===
+\section{Análisis Experimental}
+
+\begin{frame}
+\frametitle{Comparación de Tiempos}
+
+\centering
+\textbf{[GRÁFICO 1: Tiempo vs tamaño (escala log)]}
+
+\vspace{2cm}
+\small
+Instancias aleatorias con $n \in [5, 50]$ e $k=3,4,5$
+
+Eje Y: tiempo (segundos)
+
+Eje X: número de ítems
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Órdenes de Complejidad}
+
+\centering
+\textbf{[GRÁFICO 2: Comparación de órdenes]}
+
+\vspace{2cm}
+\small
+- FFD/LPT: línea plana (polinomial)
+
+- B\&B: exponencial débil
+
+- DP: exponencial fuerte $3^n$
+
+- Metaheurísticas: línea plana (parámetro fijo)
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Calidad de Soluciones}
+
+\textbf{Gap de Optimalidad:}
+\[
+\text{Gap}(\%) = \frac{\text{Heurístico} - \text{Óptimo}}{\text{Óptimo}} \times 100
+\]
+
+\vspace{0.5cm}
+\textbf{Resultados promedio:}
+\begin{itemize}
+    \item FFD: 5-15\%
+    \item LPT: 3-10\%
+    \item Genéticos: 0.5-3\%
+    \item Tabú: 0.2-1.5\%
+\end{itemize}
+
+\vspace{0.5cm}
+\centering
+\textbf{[GRÁFICO 3: Gap vs tamaño de instancia]}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Resumen Comparativo}
+
+\centering
+\small
+\begin{tabular}{|l|c|c|c|}
+\toprule
+\textbf{Algoritmo} & \textbf{Óptimo} & \textbf{Velocidad} & \textbf{Uso} \\
+\midrule
+Fuerza Bruta & Sí & No & Instancias pequeñas \\
+B\&B & Sí & Regular & Instancias medianas \\
+Prog. Dinámica & Sí & Regular & Instancias pequeñas \\
+\midrule
+FFD & No & Sí & Baseline rápido \\
+LPT & No & Sí & Baseline rápido \\
+\midrule
+Genéticos & No & Sí & Problemas reales \\
+Tabú & No & Sí & Problemas reales \\
+\bottomrule
+\end{tabular}
+
+\end{frame}
+
+%=== CONCLUSIONES ===
+\section{Conclusiones}
+
+\begin{frame}
+\frametitle{Conclusiones}
+
+\highlight{1. NP-Hard:} No existe algoritmo polinomial (bajo P $\neq$ NP)
+
+\vspace{0.3cm}
+\highlight{2. Trade-off:} Optimalidad vs velocidad
+
+\vspace{0.3cm}
+\textbf{Elección depende del contexto:}
+\begin{itemize}
+    \item Instancias pequeñas: B\&B o DP
+    \item Problemas reales: Metaheurísticas
+    \item Baseline rápido: Greedy
+\end{itemize}
+
+\vspace{0.3cm}
+\highlight{3. Herramientas:} 9 algoritmos, dashboard interactivo, benchmarking
+
+\vspace{0.3cm}
+\highlight{4. Aplicaciones:} Logística, distribución de carga, computación distribuida
+
+\end{frame}
+
+%=== AGRADECIMIENTOS ===
+\begin{frame}
+\frametitle{Agradecimientos}
+
+\vspace{2cm}
+\centering
+\Large
+\highlight{Gracias por su atención}
+
+\vspace{1.5cm}
+\normalsize
+\textbf{Preguntas y Discusión}
+
+\vspace{1cm}
+\small
+Código disponible en GitHub
+
+\end{frame}
+
+\end{document}

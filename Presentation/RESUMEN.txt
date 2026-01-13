@@ -1,0 +1,229 @@
+================================================================================
+PRESENTACIÓN COMPLETADA: PROBLEMA DE TRANSPORTE LOGÍSTICO DISCRETO
+================================================================================
+
+FECHA: 13 de enero de 2026
+UBICACIÓN: /home/abraham/Escritorio/mulas/Presentation/
+
+================================================================================
+CONTENIDO GENERADO
+================================================================================
+
+1. presentation.tex (9.3 KB)
+   - Código fuente de la presentación en LaTeX/Beamer
+   - 19 diapositivas profesionales
+   - Estructura clara y navegable
+
+2. presentation.pdf (196 KB)
+   - PDF compilado listo para usar
+   - Formato 16:9 (aspectratio=169)
+   - Tema Madrid con colores personalizados
+
+3. README.md (4.9 KB)
+   - Documentación completa de la presentación
+   - Estructura y contenido de cada sección
+   - Instrucciones de compilación
+
+4. GUIA_GRAFICOS.md (8+ KB)
+   - Especificaciones detalladas para los 4 espacios visuales
+   - Instrucciones de inserción de gráficos
+   - Referencia a fuentes de datos del proyecto
+
+================================================================================
+ESTADÍSTICAS
+================================================================================
+
+Total de diapositivas: 19
+- Introducción: 2 (Portada + Índice)
+- Problema: 1
+- Formalización: 2
+- Complejidad: 2
+- Métodos: 7
+- Análisis experimental: 4
+- Conclusiones: 1
+
+Requisitos de compilación: LaTeX estándar (TeX Live, MiKTeX)
+Tamaño del PDF: 196 KB
+Tiempo de compilación: < 2 segundos
+
+================================================================================
+CARACTERÍSTICAS PRINCIPALES
+================================================================================
+
+✓ Resumen completo del informe (menos de 20 diapositivas)
+✓ Prioridad a imágenes, fórmulas y conceptos simples
+✓ Mínimo de texto extenso (optimizado para presentación oral)
+✓ Inclusión de todos los aspectos requeridos:
+  • Descripción del problema general
+  • Formalización matemática
+  • Complejidad del problema (NP-hard)
+  • Métodos de resolución implementados
+  • Análisis comparativo de tiempos
+
+✓ Espacios reservados para elementos visuales:
+  1. Ilustración del problema (camiones y paquetes)
+  2. Gráfico: Tiempo vs tamaño (escala log)
+  3. Gráfico: Órdenes de complejidad
+  4. Gráfico: Gap de optimalidad
+
+✓ Diseño profesional y coherente
+✓ Tema Beamer Madrid personalizado
+✓ Colores distintivos para énfasis (azul #0066CC)
+✓ Tablas comparativas bien formateadas
+
+================================================================================
+SECCIONES CUBIERTA
+================================================================================
+
+SECCIÓN 1: EL PROBLEMA
+- Descripción clara y sencilla del escenario logístico
+- Motivación del problema
+- Espacio para ilustración visual
+
+SECCIÓN 2: FORMALIZACIÓN MATEMÁTICA
+- Definiciones formales (ítems, pesos, valores, contenedores)
+- Variables de decisión
+- Función objetivo y restricciones
+- Formulación como Programa Lineal Entero (ILP)
+- Propiedades del óptimo
+
+SECCIÓN 3: ANÁLISIS DE COMPLEJIDAD
+- Problema de decisión vs optimización
+- Cadena de reducciones polinomiales (PARTITION → 3-PARTITION → BMP)
+- Demostración de NP-completitud
+- Implicaciones prácticas del NP-hard
+
+SECCIÓN 4: MÉTODOS DE RESOLUCIÓN
+- Clasificación: Exactos, Aproximados, Metaheurísticas
+- Algoritmos Greedy (FFD, LPT)
+- Fuerza Bruta (límites prácticos)
+- Branch and Bound (poda inteligente)
+- Programación Dinámica (estado, transición, complejidad)
+- Metaheurísticas (SA, GA, TS)
+
+SECCIÓN 5: ANÁLISIS EXPERIMENTAL
+- Comparación de tiempos (escala logarítmica)
+- Visualización de órdenes de complejidad
+- Evaluación de calidad mediante Gap de optimalidad
+- Resumen comparativo con recomendaciones
+
+CONCLUSIONES
+- Síntesis de hallazgos principales
+- Recomendaciones según contexto de uso
+- Herramientas y aplicaciones prácticas
+
+================================================================================
+ELEMENTOS VISUALES PENDIENTES
+================================================================================
+
+Para completar la presentación al 100%, se necesita:
+
+1. GRÁFICO 1: Tiempo de Ejecución vs Tamaño (escala log-log)
+   - Comparar 8-9 algoritmos
+   - Rango: n ∈ [5, 50]
+   - Fuente: benchmarks/scalability_analysis.py
+
+2. GRÁFICO 2: Órdenes de Complejidad
+   - Mostrar tasas de crecimiento teóricas vs empíricas
+   - Líneas de referencia: O(1), O(n), O(n log n), O(2^n), O(3^n), O(k^n)
+   - Fuente: datos de benchmarks
+
+3. GRÁFICO 3: Gap de Optimalidad
+   - Heurísticas vs óptimo
+   - Algoritmos: FFD, LPT, SA, GA, TS
+   - Rango esperado: 0-20%
+   - Fuente: optimality_analysis.py
+
+4. ILUSTRACIÓN 1: Descripción Visual del Problema
+   - Paquetes de diferentes tamaños
+   - Vehículos/contenedores
+   - Distribución desbalanceada vs balanceada
+   - Herramienta: TikZ, Inkscape, o Python+Matplotlib
+
+SEE GUIA_GRAFICOS.md PARA ESPECIFICACIONES DETALLADAS
+
+================================================================================
+INSTRUCCIONES DE USO
+================================================================================
+
+COMPILACIÓN:
+  cd /home/abraham/Escritorio/mulas/Presentation
+  pdflatex presentation.tex
+
+VISUALIZACIÓN:
+  - Abrir presentation.pdf con cualquier lector PDF
+  - Usar F5 o Ctrl+Shift+P para modo presentación (en Adobe Reader)
+  - Navegar con flechas o Page Down
+
+INSERCIÓN DE GRÁFICOS:
+  1. Generar gráficos según especificaciones en GUIA_GRAFICOS.md
+  2. Guardar en subdirectorio (ej: benchmarks/ o ilustraciones/)
+  3. Actualizar referencias \includegraphics en presentation.tex
+  4. Recompilar: pdflatex presentation.tex
+
+================================================================================
+NOTAS IMPORTANTES
+================================================================================
+
+1. LaTeX/Beamer está completamente funcional y compilable
+2. Los espacios de gráficos están claramente marcados con [GRÁFICO X]
+3. La presentación sigue el estándar profesional académico
+4. Duración estimada: 15-20 minutos de exposición oral
+5. Las diapositivas están diseñadas para complementar explicación oral
+6. Se recomienda practicar la presentación antes de exponerla
+7. Los gráficos son esenciales para la comprensión visual
+
+================================================================================
+ARCHIVOS GENERADOS
+================================================================================
+
+Archivo                    Tamaño      Propósito
+───────────────────────────────────────────────────────────
+presentation.tex           9.3 KB      Código fuente LaTeX
+presentation.pdf           196 KB      PDF compilado
+presentation.log           45 KB       Log de compilación
+presentation.aux           4.8 KB      Archivo auxiliar
+presentation.nav           3.0 KB      Navegación Beamer
+presentation.toc           0.4 KB      Tabla de contenidos
+presentation.out           0.9 KB      Referencias PDF
+README.md                  4.9 KB      Documentación principal
+GUIA_GRAFICOS.md           8+ KB       Especificaciones visuales
+RESUMEN.txt                Este archivo
+
+Total: ~270 KB (sin archivos temporales)
+
+================================================================================
+PRÓXIMOS PASOS SUGERIDOS
+================================================================================
+
+1. [ ] Generar los 4 gráficos faltantes (Ver GUIA_GRAFICOS.md)
+2. [ ] Insertar gráficos en presentation.tex
+3. [ ] Compilar y verificar resultado visual
+4. [ ] Ajustar tamaños de imagen si es necesario
+5. [ ] Practicar la presentación (15-20 minutos)
+6. [ ] Preparar material complementario (notas del presentador)
+7. [ ] Hacer backup del PDF final
+8. [ ] Transferir a dispositivo de presentación
+
+================================================================================
+DATOS DE CONTACTO / INFORMACIÓN DEL PROYECTO
+================================================================================
+
+Autores:
+- Richard Alejandro Matos Arderí
+- Abel Ponce González
+- Abraham Romero Imbert
+
+Institución: Facultad de Matemática y Computación, Universidad de La Habana
+
+Repositorio: https://github.com/Pol4720/mulas
+
+================================================================================
+FIN DEL RESUMEN
+================================================================================
+
+La presentación está lista para usar. Los espacios visuales están claramente
+identificados y documentados en GUIA_GRAFICOS.md para facilitar la inserción
+de gráficos cuando estén disponibles.
+
+¡Éxito en su presentación!

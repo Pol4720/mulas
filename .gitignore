@@ -217,6 +217,9 @@ __marimo__/
 *.toc
 *.log
 *.pdf
+*.nav
+*.snm
+*.vrb
 build/
 
 to-do.txt

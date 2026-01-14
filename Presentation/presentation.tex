@@ -22,7 +22,7 @@
 % Título y autor
 \title{Problema de Transporte Logístico Discreto}
 \subtitle{Diseño y Análisis de Algoritmos}
-\author{R. A. Matos Arderí \\ A. Ponce González \\ A. Romero Imbert}
+\author{Richard A. Matos Arderí \\ Abel Ponce González \\ Abraham Romero Imbert}
 \institute{Facultad de Matemática y Computación}
 \date{\today}
 
@@ -57,8 +57,8 @@
 \vspace{0.5cm}
 \textbf{Ejemplo Simple:}
 \begin{itemize}
-    \item 5 paquetes: 2kg, 3kg, 4kg, 1kg, 2kg
-    \item 2 camiones: 6kg cada uno
+    \item 4 paquetes: 2kg, 3kg, 4kg, 1kg
+    \item 2 camiones: 6kg uno y 5kg otro
     \item Desafío: distribución equitativa
 \end{itemize}
 
@@ -76,7 +76,7 @@
 
 \textbf{Entrada del Problema:}
 \begin{itemize}
-    \item Ítems: $I = \{1, 2, \ldots, n\}$
+    \item Ítems: Un ítem $i \in I$ se caracteriza por un par $(w_i, v_i)$, $I = \{1, 2, \ldots, n\}$
     \item Pesos: $w_i > 0$ para cada ítem $i$
     \item Valores: $v_i \geq 0$ para cada ítem $i$
     \item $k$ contenedores con capacidades $C_1, \ldots, C_k$
@@ -90,10 +90,12 @@ x_{ij} = \begin{cases} 1 & \text{si ítem } i \text{ va a contenedor } j \\ 0 & 
 
 \vspace{0.3cm}
 \textbf{Objetivo:}
-\[
-\text{Minimizar: } \max_j V_j - \min_j V_j
-\]
+$\text{Minimizar: } \max_j V_j - \min_j V_j $ \\
 donde $V_j = \sum_{i=1}^{n} v_i \cdot x_{ij}$
+
+\textbf{Sujeto a:} 
+$\forall j \in \{1, \ldots, k\}: \sum_{i: \sigma(i) = j} w_i \leq C_j$
+
 
 \end{frame}
 

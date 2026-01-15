@@ -123,19 +123,35 @@ $\forall j \in \{1, \ldots, k\}: \sum_{i: \sigma(i) = j} w_i \leq C_j$
 \begin{frame}
 \frametitle{Problema de Decisión vs Optimización}
 
-\textbf{Problema de Decisión:}
+\textbf{Problema de Decisión (BALANCED-BIN-PACKING-DEC):}
 \begin{quote}
-Existe asignación factible con desbalance $\leq B$?
+Dados $n$ ítems con pesos y valores, $k$ bins con capacidades $C_1, \ldots, C_k$, y un umbral $B$, ¿existe una asignación factible tal que la diferencia máxima de valores entre bins sea $\leq B$?
 \end{quote}
 
 \vspace{0.5cm}
-\textbf{Problema de Optimización:}
+\textbf{Problema de Optimización (BALANCED-BIN-PACKING-OPT):} 
 \begin{quote}
-Minimizar el desbalance.
+Dados $n$ ítems con pesos y valores, $k$ bins con capacidades $C_1, \ldots, C_k$, encontrar una asignación factible que minimice la diferencia máxima de valores entre bins.
 \end{quote}
 
 \vspace{0.5cm}
-\highlight{Resultado:} El problema es \textbf{NP-Completo}
+\highlight{Proposición:} Si el problema de decisión BALANCED-BIN-PACKING-DEC está en NP, entonces el problema de optimización BALANCED-BIN-PACKING-OPT está en NPO (problemas de optimización NP).
+
+\end{frame}
+
+\begin{frame}
+    \textbf{Paso 1: BALANCED-BIN-PACKING-DEC $\in$ NP}
+
+Un certificado para una instancia con respuesta 'sí' es una asignación $\sigma: I \rightarrow \{1, \ldots, k\}$. La verificación requiere:
+\begin{enumerate}
+    \item Verificar que cada ítem está asignado: $O(n)$
+    \item Calcular peso total de cada bin: $O(n)$
+    \item Verificar restricciones de capacidad: $O(k)$
+    \item Calcular valor total de cada bin: $O(n)$
+    \item Verificar que $\max_j V_j - \min_j V_j \leq B$: $O(k)$
+\end{enumerate}
+
+Total: $O(n + k)$, por lo tanto el certificado es verificable en tiempo polinomial. $\square$
 
 \end{frame}
 
@@ -145,11 +161,15 @@ Minimizar el desbalance.
 \centering
 \Large
 \vspace{1cm}
-PARTITION $\rightarrow$ 3-PARTITION $\rightarrow$ BALANCED-BIN-PACKING
+PARTITION $\leq_p$ 3-PARTITION $\leq_p$ BALANCED-BIN-PACKING
 
 \vspace{1cm}
 \normalsize
 \textbf{Implicación:} El problema es \textbf{NP-Hard}
+
+\vspace{0.5cm}
+
+\textbf{Resultado:} El problema es NP-Completo
 
 \vspace{0.5cm}
 No existe algoritmo polinomial conocido (asumiendo P $\neq$ NP)

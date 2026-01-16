@@ -981,6 +981,13 @@ class AlgorithmSelector:
             'description': 'Prioriza reducir la mayor diferencia de valor entre contenedores.',
             'params': {}
         },
+        'BruteForce': {
+            'name': 'Fuerza Bruta',
+            'category': 'Exacto',
+            'complexity': 'O(k^n)',
+            'description': '⚠️ Solo para instancias muy pequeñas (n≤12). Enumeración exhaustiva. Solución óptima garantizada.',
+            'params': {}
+        },
         'SimulatedAnnealing': {
             'name': 'Recocido Simulado',
             'category': 'Metaheurística',

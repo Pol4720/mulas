@@ -183,28 +183,34 @@ Se requiere trade-off: \highlight{optimalidad vs velocidad}
 \section{Métodos de Resolución}
 
 \begin{frame}
-\frametitle{Clasificación de Algoritmos}
+\frametitle{Métodos Implementados (por tipo)}
 
-\centering
+\textbf{Exactos (garantizan óptimo):}
+\begin{itemize}
+    \item Fuerza Bruta
+    \item Branch \& Bound
+    \item Programación Dinámica
+\end{itemize}
+
+\textbf{Greedy / Aproximados (muy rápidos):}
+\begin{itemize}
+    \item FFD (First Fit Decreasing)
+    \item BFD (Best Fit Decreasing)
+    \item WFD (Worst Fit Decreasing)
+    \item LPT Balanced
+    \item Round Robin balanceado
+\end{itemize}
+
+\textbf{Metaheurísticas (búsqueda inteligente):}
+\begin{itemize}
+    \item Simulated Annealing
+    \item Algoritmos Genéticos
+    \item Búsqueda Tabú
+\end{itemize}
+
+\vspace{0.2cm}
 \small
-\begin{tabular}{|l|c|c|c|}
-\toprule
-\textbf{Método} & \textbf{Óptimo} & \textbf{Velocidad} & \textbf{Rango} \\
-\midrule
-\textbf{Exactos:} \\
-Fuerza Bruta & Sí & Lenta & $n < 15$ \\
-Branch \& Bound & Sí & Media & $n < 25$ \\
-Prog. Dinámica & Sí & Media & $n < 20$ \\
-\midrule
-\textbf{Aproximados:} \\
-Greedy (FFD/LPT) & No & Muy rápida & Todos \\
-\midrule
-\textbf{Metaheurísticas:} \\
-Simulated Annealing & No & Rápida & Todos \\
-Algoritmos Genéticos & No & Rápida & Todos \\
-Búsqueda Tabú & No & Rápida & Todos \\
-\bottomrule
-\end{tabular}
+\highlight{Nota:} Greedy prioriza velocidad; metaheurísticas balancean calidad/tiempo; exactos garantizan optimalidad en instancias pequeñas.
 
 \end{frame}
 

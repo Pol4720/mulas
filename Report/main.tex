@@ -658,6 +658,108 @@ El algoritmo FFD ordena los ítems por peso decreciente y asigna cada ítem al p
 \end{algorithmic}
 \end{algorithm}
 
+\subsubsection{Best Fit Decreasing (BFD)}
+
+El algoritmo BFD ordena los ítems por valor decreciente y asigna cada ítem al contenedor que minimiza la diferencia de valores resultante después de la asignación.
+
+\begin{algorithm}[H]
+\caption{Best Fit Decreasing}
+\begin{algorithmic}[1]
+\Procedure{BFD}{$items, k, C_1, \ldots, C_k$}
+    \State $sorted\_items \gets \text{sort}(items, \text{key}=value, \text{desc}=True)$
+    \State $bins \gets [\text{Bin}(j, C_j) \text{ for } j \in 1..k]$
+    
+    \For{$item \in sorted\_items$}
+        \State $best\_bin \gets \text{null}$
+        \State $best\_diff \gets \infty$
+        
+        \Comment{Encontrar bin que minimiza diferencia resultante}
+        \For{$j \in 1..k$}
+            \If{$\text{weight}(bins[j]) + item.weight \leq C_j$}
+                \State $temp\_value \gets bins[j].value + item.value$
+                \State $all\_values \gets [bins[i].value \text{ for } i \in 1..k]$
+                \State $all\_values[j] \gets temp\_value$
+                \State $diff \gets \max(all\_values) - \min(all\_values)$
+                
+                \If{$diff < best\_diff$}
+                    \State $best\_diff \gets diff$
+                    \State $best\_bin \gets j$
+                \EndIf
+            \EndIf
+        \EndFor
+        
+        \If{$best\_bin \neq \text{null}$}
+            \State $bins[best\_bin].\text{add}(item)$
+        \EndIf
+    \EndFor
+    
+    \State \Return $bins$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Worst Fit Decreasing (WFD)}
+
+El algoritmo WFD asigna cada ítem (ordenado por valor decreciente) al contenedor con mayor capacidad disponible. Esta estrategia tiende a distribuir los ítems de manera más uniforme por peso.
+
+\begin{algorithm}[H]
+\caption{Worst Fit Decreasing}
+\begin{algorithmic}[1]
+\Procedure{WFD}{$items, k, C_1, \ldots, C_k$}
+    \State $sorted\_items \gets \text{sort}(items, \text{key}=value, \text{desc}=True)$
+    \State $bins \gets [\text{Bin}(j, C_j) \text{ for } j \in 1..k]$
+    
+    \For{$item \in sorted\_items$}
+        \State $best\_bin \gets \text{null}$
+        \State $max\_remaining \gets -1$
+        
+        \Comment{Encontrar bin con mayor capacidad disponible}
+        \For{$j \in 1..k$}
+            \If{$\text{weight}(bins[j]) + item.weight \leq C_j$}
+                \State $remaining \gets C_j - \text{weight}(bins[j])$
+                \If{$remaining > max\_remaining$}
+                    \State $max\_remaining \gets remaining$
+                    \State $best\_bin \gets j$
+                \EndIf
+            \EndIf
+        \EndFor
+        
+        \If{$best\_bin \neq \text{null}$}
+            \State $bins[best\_bin].\text{add}(item)$
+        \EndIf
+    \EndFor
+    
+    \State \Return $bins$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Round Robin Greedy}
+
+El algoritmo Round Robin distribuye los ítems (ordenados por valor decreciente, estilo LPT) asignando cada uno al contenedor con menor valor actual que pueda alojarlo.
+
+\begin{algorithm}[H]
+\caption{Round Robin Greedy}
+\begin{algorithmic}[1]
+\Procedure{RoundRobinGreedy}{$items, k, C_1, \ldots, C_k$}
+    \State $sorted\_items \gets \text{sort}(items, \text{key}=value, \text{desc}=True)$
+    \State $bins \gets [\text{Bin}(j, C_j) \text{ for } j \in 1..k]$
+    
+    \For{$item \in sorted\_items$}
+        \State $feasible\_bins \gets [j : \text{weight}(bins[j]) + item.weight \leq C_j]$
+        
+        \If{$feasible\_bins \neq \emptyset$}
+            \Comment{Seleccionar bin con mínimo valor actual}
+            \State $min\_bin \gets \arg\min_{j \in feasible\_bins} bins[j].value$
+            \State $bins[min\_bin].\text{add}(item)$
+        \EndIf
+    \EndFor
+    
+    \State \Return $bins$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
 \subsubsection{LPT Balanced}
 
 El algoritmo Longest Processing Time (LPT) adaptado para balanceo asigna cada ítem al contenedor con menor carga actual, respetando las capacidades individuales.
@@ -667,7 +769,7 @@ El algoritmo Longest Processing Time (LPT) adaptado para balanceo asigna cada í
 \begin{algorithmic}[1]
 \Procedure{LPT}{$items, k, C_1, \ldots, C_k$}
     \State $sorted\_items \gets \text{sort}(items, \text{key}=value, \text{desc}=True)$
-    \State $bins \gets [\ ] \times k$ \Comment{Bins con capacidades individuales}
+    \State $bins \gets [\text{Bin}(j, C_j) \text{ for } j \in 1..k]$
     \For{$item \in sorted\_items$}
         \State $j^* \gets \arg\min_{j: \text{weight}(bins[j]) + item.weight \leq C_j} \text{value}(bins[j])$
         \State $bins[j^*].\text{add}(item)$
@@ -1048,6 +1150,8 @@ El factor de crecimiento cercano a 3 confirma el comportamiento $O(3^n)$ para $k
 
 \subsubsection{Simulated Annealing}
 
+El algoritmo Simulated Annealing (SA) es una técnica metaheurística inspirada en el proceso de recocido en metalurgia. Comienza con una solución inicial (típicamente obtenida por un algoritmo greedy) y realiza búsqueda local mediante movimientos a soluciones vecinas. La característica clave es que acepta movimientos que empeoran la solución con una probabilidad que disminuye gradualmente (según una "temperatura"), permitiendo escapar de óptimos locales al inicio del proceso e intensificar la búsqueda hacia el final.
+
 \begin{algorithm}[H]
 \caption{Simulated Annealing}
 \begin{algorithmic}[1]
@@ -1076,6 +1180,8 @@ El factor de crecimiento cercano a 3 confirma el comportamiento $O(3^n)$ para $k
 \end{algorithm}
 
 \subsubsection{Algoritmo Genético}
+
+El Algoritmo Genético (GA) es una metaheurística bioinspirada que mantiene una población de soluciones candidatas (cromosomas) que evoluciona a lo largo de varias generaciones. En cada generación, se seleccionan individuos (soluciones) mediante torneo, se aplican operadores de cruzamiento (crossover) y mutación para generar nuevos individuos, y se reemplaza la población anterior. Esta estrategia permite explorar el espacio de soluciones de manera paralela desde múltiples puntos, combinando la información de buenas soluciones previas.
 
 \begin{algorithm}[H]
 \caption{Algoritmo Genético}
@@ -1108,6 +1214,78 @@ El factor de crecimiento cercano a 3 confirma el comportamiento $O(3^n)$ para $k
     \EndFor
     
     \State \Return $\text{best}(population)$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Tabu Search}
+
+El algoritmo de Búsqueda Tabú (Tabu Search) es una técnica de búsqueda local que usa una lista tabú para evitar ciclos. Mantiene un registro de los movimientos recientes (prohibidos) y permite movimientos que violarían la optimalidad local si cumplen con el criterio de aspiración.
+
+\begin{algorithm}[H]
+\caption{Tabu Search}
+\begin{algorithmic}[1]
+\Procedure{TabuSearch}{$problem, max\_iter, tenure, aspiration$}
+    \State $current \gets \text{greedy\_solution}(problem)$ \Comment{Solución inicial}
+    \State $best \gets current$
+    \State $tabu\_list \gets \{\}$ \Comment{Lista tabú vacía}
+    
+    \For{$iteration \gets 1$ \textbf{to} $max\_iter$}
+        \Comment{Generar vecinos: intentar mover cada ítem a otro bin}
+        \State $neighbors \gets \{\}$
+        
+        \For{\textbf{each} $bin \in current.bins$}
+            \For{\textbf{each} $item \in bin.items$}
+                \For{$target\_bin \in 1..k$}
+                    \If{$target\_bin \neq bin.id$ \textbf{and} $item.weight \leq remaining\_capacity(target\_bin)$}
+                        \State $neighbor \gets \text{copy}(current)$
+                        \State $neighbor.move\_item(item, bin.id, target\_bin)$
+                        \State $move \gets (item.id, bin.id, target\_bin)$
+                        \State $neighbors \gets neighbors \cup \{(neighbor, move)\}$
+                    \EndIf
+                \EndFor
+            \EndFor
+        \EndFor
+        
+        \Comment{Seleccionar mejor vecino admisible}
+        \State $best\_neighbor \gets \text{null}$
+        \State $best\_move \gets \text{null}$
+        \State $best\_diff \gets \infty$
+        
+        \For{$(neighbor, move) \in neighbors$}
+            \State $is\_tabu \gets move \in tabu\_list$
+            \State $reverse\_move \gets (move.item, move.to\_bin, move.from\_bin)$
+            
+            \Comment{Criterio de aspiración: acepta si mejora best}
+            \If{$is\_tabu$ \textbf{and} $aspiration$ \textbf{and} $neighbor.diff < best.diff$}
+                \State $is\_tabu \gets \text{false}$
+            \EndIf
+            
+            \If{\textbf{not} $is\_tabu$ \textbf{and} $neighbor.diff < best\_diff$}
+                \State $best\_diff \gets neighbor.diff$
+                \State $best\_neighbor \gets neighbor$
+                \State $best\_move \gets reverse\_move$
+            \EndIf
+        \EndFor
+        
+        \If{$best\_neighbor = \text{null}$}
+            \State $\text{break}$ \Comment{Sin vecinos admisibles}
+        \EndIf
+        
+        \Comment{Moverse al mejor vecino}
+        \State $current \gets best\_neighbor$
+        
+        \Comment{Actualizar lista tabú}
+        \State $tabu\_list[best\_move] \gets iteration + tenure$
+        \State $tabu\_list \gets \{m : tabu\_list[m] > iteration\}$ \Comment{Limpiar entradas viejas}
+        
+        \Comment{Actualizar mejor solución global}
+        \If{$current.diff < best.diff$}
+            \State $best \gets \text{copy}(current)$
+        \EndIf
+    \EndFor
+    
+    \State \Return $best$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}

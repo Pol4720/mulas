@@ -448,9 +448,11 @@ Si existiera un algoritmo polinomial para el caso heterogéneo, también resolve
 \toprule
 \textbf{Algoritmo} & \textbf{Tiempo} & \textbf{Espacio} \\
 \midrule
+Búsqueda Exhaustiva (Fuerza Bruta) & $O(k^n \cdot n)$ & $O(n + k)$ \\
 First Fit Decreasing (FFD) & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
 Best Fit Decreasing (BFD) & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
 Worst Fit Decreasing (WFD) & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+Round Robin Greedy & $O(n \log n + n \log k)$ & $O(n + k)$ \\
 LPT Balanced & $O(n \log n + n \log k)$ & $O(n + k)$ \\
 Programación Dinámica & $O(k^2 \cdot 3^n)$ & $O(k \cdot 2^n)$ \\
 Branch and Bound & $O(k^n)$ peor caso & $O(n \cdot k)$ \\

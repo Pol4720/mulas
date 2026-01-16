@@ -215,96 +215,125 @@ Se requiere trade-off: \highlight{optimalidad vs velocidad}
 \end{frame}
 
 \begin{frame}
-\frametitle{Algoritmos Greedy}
+\frametitle{Búsqueda Exhaustiva (Fuerza Bruta)}
 
-\textbf{First Fit Decreasing (FFD):}
-\begin{enumerate}
-    \item Ordenar ítems por peso (descendente)
-    \item Asignar al primer contenedor con espacio
-\end{enumerate}
-
-\textbf{Complejidad:} $O(n \log n)$
-
-\vspace{0.5cm}
-\textbf{LPT Balanced:}
-\begin{enumerate}
-    \item Ordenar ítems por valor (descendente)
-    \item Asignar al contenedor con menos carga
-\end{enumerate}
-
-\textbf{Complejidad:} $O(n \log n)$
+\textbf{Estrategia:} Enumerar y evaluar todas las $k^n$ asignaciones posibles.
 
 \vspace{0.3cm}
-\highlight{Ventajas:} Muy rápidos, buenos resultados
-
-\highlight{Desventajas:} No garantizan optimalidad
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Fuerza Bruta}
-
-Probar las $k^n$ asignaciones posibles.
+\textbf{Garantías:} \highlight{Encuentra el óptimo global garantizado}
 
 \vspace{0.5cm}
-\textbf{Límites prácticos:}
+\textbf{Límites prácticos (1 segundo):}
 \begin{itemize}
-    \item $k=2$: hasta $n=14$ (1 segundo)
-    \item $k=3$: hasta $n=11$ (1 segundo)
-    \item $k=4$: hasta $n=8$ (1 segundo)
+    \item $k=2$: hasta $n=14$ (16K asignaciones)
+    \item $k=3$: hasta $n=11$ (177K asignaciones)
+    \item $k=4$: hasta $n=8$ (65K asignaciones)
 \end{itemize}
-
-\vspace{0.5cm}
-\textbf{Complejidad:} $O(k^n \cdot n)$
-
-\vspace{0.3cm}
-\textbf{Rol:} Validar heurísticas, instancias pequeñas
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Branch and Bound}
-
-\textbf{Idea:} Fuerza Bruta + poda inteligente
-
-\vspace{0.3cm}
-Explora árbol de decisiones calculando cotas inferiores.
-
-\vspace{0.3cm}
-Si cota $\geq$ mejor solución: \highlight{poda la rama}
-
-\vspace{0.5cm}
-\textbf{Ventajas:}
-\begin{itemize}
-    \item Garantiza optimalidad
-    \item Mejora significativa en práctica
-    \item Efectivo con cotas ajustadas
-\end{itemize}
-
-\vspace{0.3cm}
-\textbf{Complejidad:} $O(k^n)$ peor caso
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Programación Dinámica}
-
-\textbf{Idea:} Construir solución bin por bin.
-
-\vspace{0.3cm}
-\textbf{Estado:} $DP[j][mask]$ = mejor asignación de ítems en $mask$ a primeros $j$ contenedores
-
-\vspace{0.3cm}
-\textbf{Transición:} Probar subconjuntos del contenedor $j$
 
 \vspace{0.5cm}
 \textbf{Complejidad:}
 \begin{itemize}
-    \item Tiempo: $O(k^2 \cdot 3^n)$
-    \item Espacio: $O(k \cdot 2^n)$
+    \item \textbf{Tiempo:} $O(k^n \cdot n)$ - Exponencial en ambas dimensiones
+    \item \textbf{Espacio:} $O(n + k)$ - Muy eficiente
 \end{itemize}
 
-\textbf{Aplicabilidad:} Instancias pequeñas ($n < 20$)
+\vspace{0.3cm}
+\textbf{Aplicabilidad:} Validar heurísticas, instancias pequeñas ($n \leq 14$)
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Branch and Bound - Búsqueda con Poda}
+
+\textbf{Idea Central:} Fuerza Bruta + Cotas Inferiores = Poda Inteligente
+
+\vspace{0.3cm}
+\textbf{Algoritmo:}
+\begin{enumerate}
+    \item Construir árbol de decisión rama por rama
+    \item Para cada nodo: calcular \textbf{cota inferior} optimista
+    \item Si cota $\geq$ mejor solución encontrada: \highlight{podar rama}
+    \item Continuar con ramas prometedoras
+\end{enumerate}
+
+\vspace{0.3cm}
+\textbf{Mejora respecto Fuerza Bruta:}
+\begin{itemize}
+    \item Explora \highlight{solo subárbol prometedor}
+    \item Cotas ajustadas = mayor poda
+    \item Encontrar óptimo rápido = mejor umbral de poda
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Complejidad:} $O(k^n)$ peor caso, pero mucho mejor en práctica
+
+\vspace{0.3cm}
+\textbf{Garantías:} \highlight{Optimalidad + velocidad} en instancias medianas
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Programación Dinámica - Construcción Óptima}
+
+\textbf{Estrategia:} Construir solución de forma incremental: contenedor por contenedor.
+
+\vspace{0.3cm}
+\textbf{Subestructura Óptima:} Si tenemos la mejor asignación a $j-1$ contenedores, podemos encontrar la mejor para $j$ contenedores añadiendo uno nuevo.
+
+\vspace{0.3cm}
+\textbf{Estado DP:} $DP[j][mask]$ = mejor configuración de ítems en $mask$ usando primeros $j$ contenedores
+
+\begin{itemize}
+    \item $j$: número de contenedores (1 a $k$)
+    \item $mask$: subconjunto binario de ítems
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Recurrencia:} Para cada contenedor $j$, probar todos los subconjuntos de ítems que le caben
+
+\vspace{0.3cm}
+\textbf{Complejidad:}
+\begin{itemize}
+    \item \textbf{Tiempo:} $O(k^2 \cdot 3^n)$ - Factor 3 por subconjuntos
+    \item \textbf{Espacio:} $O(k \cdot 2^n)$ - Tabla completa
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{Límites:} Instancias pequeñas ($n \leq 15$)
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Algoritmos Greedy - Estrategias Locales}
+
+\textbf{Característica:} Decisiones locales sin reconsideración, \highlight{extremadamente rápidos}
+
+\vspace{0.3cm}
+\textbf{First Fit Decreasing (FFD) - Minimalista:}
+\begin{itemize}
+    \item Ordenar ítems por peso (descendente)
+    \item Asignar al primer contenedor que quepa
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{Best Fit Decreasing (BFD) - Equilibrado:}
+\begin{itemize}
+    \item Ordenar ítems por valor (descendente)
+    \item Asignar al contenedor que minimiza diferencia resultante
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{Round Robin / LPT Balanced:}
+\begin{itemize}
+    \item Ordenar ítems por valor (descendente)
+    \item Asignar siempre al contenedor con menor carga actual
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Complejidad:} $O(n \log n + n \cdot k)$ para todos
+
+\vspace{0.2cm}
+\textbf{Trade-off:} \highlight{Velocidad} (milisegundos) vs \highlight{Optimalidad} (3-15\% gap)
 
 \end{frame}
 
@@ -326,6 +355,41 @@ Simulated Annealing, Algoritmos Genéticos, Búsqueda Tabú
 \textbf{Ventajas:} Rápidas, buenos resultados
 
 \textbf{Desventajas:} Sin garantías, aleatoriedad, parámetros
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Análisis de Complejidad - Comparativa}
+
+\begin{center}
+\textbf{Complejidad temporal y espacial de los algoritmos implementados}
+\end{center}
+
+\vspace{0.3cm}
+\small
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Algoritmo} & \textbf{Tiempo} & \textbf{Espacio} \\
+\midrule
+Fuerza Bruta & $O(k^n \cdot n)$ & $O(n + k)$ \\
+FFD & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
+BFD & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
+WFD & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+Round Robin & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+LPT Balanced & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+Prog. Dinámica & $O(k^2 \cdot 3^n)$ & $O(k \cdot 2^n)$ \\
+Branch \& Bound & $O(k^n)$ peor caso & $O(n \cdot k)$ \\
+Simulated Annealing & $O(I \cdot n)$ & $O(n)$ \\
+Genetic Algorithm & $O(G \cdot P \cdot n)$ & $O(P \cdot n)$ \\
+Tabu Search & $O(I \cdot N)$ & $O(n + T)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.3cm}
+\normalsize
+\textbf{Leyenda:} $n$=ítems, $k$=contenedores, $I$=iteraciones, $G$=generaciones, $P$=población, $N$=vecindario, $T$=lista tabú
 
 \end{frame}
 
@@ -394,19 +458,29 @@ Eje X: número de ítems
 
 \centering
 \small
-\begin{tabular}{|l|c|c|c|}
+\begin{tabular}{|l|c|c|c|l|}
 \toprule
-\textbf{Algoritmo} & \textbf{Óptimo} & \textbf{Velocidad} & \textbf{Uso} \\
+\textbf{Algoritmo} & \textbf{Óptimo} & \textbf{Velocidad} & \textbf{Rango} & \textbf{Aplicación} \\
 \midrule
-Fuerza Bruta & Sí & No & Instancias pequeñas \\
-B\&B & Sí & Regular & Instancias medianas \\
-Prog. Dinámica & Sí & Regular & Instancias pequeñas \\
+\multicolumn{5}{|l|}{\textbf{Métodos Exactos (Garantizan optimalidad)}} \\
 \midrule
-FFD & No & Sí & Baseline rápido \\
-LPT & No & Sí & Baseline rápido \\
+Fuerza Bruta & Sí & Muy lenta & $n < 15$ & Validación, instancias mínimas \\
+Branch \& Bound & Sí & Media & $n < 25$ & Instancias medianas, mejor relación \\
+Prog. Dinámica & Sí & Media & $n < 20$ & Instancias pequeñas con subproblemas \\
 \midrule
-Genéticos & No & Sí & Problemas reales \\
-Tabú & No & Sí & Problemas reales \\
+\multicolumn{5}{|l|}{\textbf{Métodos Aproximados/Greedy (Rápidos, sin garantía)}} \\
+\midrule
+FFD (First Fit Dec.) & No & Muy rápida & Todos & Baseline rápido, gap 5-15\% \\
+BFD (Best Fit Dec.) & No & Muy rápida & Todos & Equilibrio simple, gap 4-12\% \\
+WFD (Worst Fit Dec.) & No & Muy rápida & Todos & Distribución balanceada, gap 5-15\% \\
+LPT Balanced & No & Muy rápida & Todos & Greedy mejorado, gap 3-10\% \\
+Round Robin & No & Muy rápida & Todos & Distribución uniforme, gap 4-14\% \\
+\midrule
+\multicolumn{5}{|l|}{\textbf{Metaheurísticas (Búsqueda inteligente, mejor calidad)}} \\
+\midrule
+Simulated Annealing & No & Rápida & Todos & Escape de mínimos locales, gap 0.5-2\% \\
+Algoritmos Genéticos & No & Rápida & Todos & Problemas complejos, gap 0.5-3\% \\
+Búsqueda Tabú & No & Rápida & Todos & Mejor calidad promedio, gap 0.2-1.5\% \\
 \bottomrule
 \end{tabular}
 

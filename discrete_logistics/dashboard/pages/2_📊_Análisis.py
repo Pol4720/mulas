@@ -78,15 +78,118 @@ viz_panel = VisualizationPanel()
 # Quick Stats Dashboard
 st.markdown("### 📈 Resumen Rápido")
 
+# ============================================================================
+# Enhanced Best Algorithm Selection Logic
+# ============================================================================
+
+def calculate_algorithm_score(results: dict) -> tuple[str, dict]:
+    """
+    Selecciona el mejor algoritmo usando múltiples criterios.
+    
+    Criterios de evaluación (en orden de prioridad):
+    1. Factibilidad: Solo algoritmos con soluciones factibles
+    2. Optimalidad: Minimizar el valor objetivo
+    3. Balance: Maximizar el score de balance (si está disponible)
+    4. Eficiencia: Minimizar tiempo de ejecución (como criterio secundario)
+    5. Estabilidad: Preferir resultados con menos variación
+    
+    Returns:
+        Tupla (nombre_mejor_algo, dict_metadatos_scoring)
+    """
+    
+    # Filtrar solo algoritmos factibles
+    feasible_results = {
+        algo: result 
+        for algo, result in results.items() 
+        if result.get('feasible', False) and result.get('objective', float('inf')) != float('inf')
+    }
+    
+    if not feasible_results:
+        # Si no hay factibles, devolver el que menos tiempo tardó en fallar
+        return (
+            min(results.items(), key=lambda x: x[1].get('time', float('inf')))[0],
+            {'reason': 'fallback_by_speed', 'status': 'sin_solucion_factible'}
+        )
+    
+    # Criterio 1: Mejor objetivo (óptimo)
+    best_by_objective = min(
+        feasible_results.items(),
+        key=lambda x: x[1].get('objective', float('inf'))
+    )[0]
+    best_objective = feasible_results[best_by_objective].get('objective', float('inf'))
+    
+    # Criterio 2: Mejor balance (si está disponible)
+    best_by_balance = max(
+        feasible_results.items(),
+        key=lambda x: x[1].get('balance_score', 0)
+    )[0]
+    best_balance = feasible_results[best_by_balance].get('balance_score', 0)
+    
+    # Criterio 3: Más rápido (entre factibles)
+    best_by_speed = min(
+        feasible_results.items(),
+        key=lambda x: x[1].get('time', float('inf'))
+    )[0]
+    best_time = feasible_results[best_by_speed].get('time', float('inf'))
+    
+    # Scoring normalizado (0-100)
+    scores = {}
+    
+    for algo, result in feasible_results.items():
+        obj = result.get('objective', float('inf'))
+        balance = result.get('balance_score', 0)
+        time = result.get('time', float('inf'))
+        
+        # Sub-score 1: Optimalidad (40% peso)
+        # Menor objetivo = mayor puntuación
+        obj_score = 100 * (best_objective / obj) if obj > 0 else 0
+        obj_score = min(100, obj_score)  # Capped at 100
+        
+        # Sub-score 2: Balance (35% peso)
+        balance_score = 100 * balance
+        
+        # Sub-score 3: Velocidad (25% peso)
+        # Menor tiempo = mayor puntuación
+        speed_score = 100 * (best_time / time) if time > 0 else 100
+        speed_score = min(100, speed_score)
+        
+        # Score combinado ponderado
+        total_score = (
+            0.40 * obj_score +
+            0.35 * balance_score +
+            0.25 * speed_score
+        )
+        
+        scores[algo] = {
+            'total': total_score,
+            'objective': obj_score,
+            'balance': balance_score,
+            'speed': speed_score,
+            'raw_objective': obj,
+            'raw_balance': balance,
+            'raw_time': time
+        }
+    
+    # Seleccionar algoritmo con mayor score
+    best_algo = max(scores.items(), key=lambda x: x[1]['total'])[0]
+    
+    return best_algo, scores[best_algo]
+
+
 # Calculate quick stats
-objectives = [r.get('objective', float('inf')) for r in results.values() if r.get('objective') != float('inf')]
+objectives = [
+    r.get('objective', float('inf')) 
+    for r in results.values() 
+    if r.get('objective') != float('inf') and r.get('feasible', False)
+]
 times = [r.get('time', 0) for r in results.values()]
-best_algo = min(results.items(), key=lambda x: x[1].get('objective', float('inf')))[0]
+
+best_algo, algo_score_info = calculate_algorithm_score(results)
 fastest_algo = min(results.items(), key=lambda x: x[1].get('time', float('inf')))[0]
 
 stats = {
     'Mejor Objetivo': {
-        'value': min(objectives) if objectives else 0,
+        'value': min(objectives) if objectives else '∞',
         'icon': '🏆',
         'color': '#10B981'
     },
@@ -101,9 +204,10 @@ stats = {
         'color': '#8B5CF6'
     },
     'Mejor Algoritmo': {
-        'value': best_algo[:15] + '...' if len(best_algo) > 15 else best_algo,
+        'value': best_algo[:20] + '...' if len(best_algo) > 20 else best_algo,
         'icon': '🥇',
-        'color': '#F59E0B'
+        'color': '#F59E0B',
+        'score': f"({algo_score_info['total']:.0f}/100)"
     }
 }
 
@@ -123,16 +227,62 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.markdown("### 📊 Métricas de Rendimiento")
     
+    # ============================================================================
+    # Improved Ranking System with Tie-Breaking
+    # ============================================================================
+    
+    def calculate_ranking(results: dict, best_algo: str) -> dict:
+        """
+        Calcula rankings con criterio de desempate por tiempo.
+        
+        En caso de empate en objetivo:
+        1. Se compara por tiempo (menor es mejor)
+        2. Se compara por balance (mayor es mejor)
+        
+        Returns:
+            Dict {algoritmo: ranking_emoji}
+        """
+        # Filtrar solo algoritmos factibles
+        feasible_results = {
+            algo: result 
+            for algo, result in results.items() 
+            if result.get('feasible', False) and result.get('objective', float('inf')) != float('inf')
+        }
+        
+        if not feasible_results:
+            return {}
+        
+        # Ordenar por: (1) objetivo, (2) tiempo, (3) balance (descendente)
+        sorted_algos = sorted(
+            feasible_results.items(),
+            key=lambda x: (
+                x[1].get('objective', float('inf')),  # Menor objetivo primero
+                x[1].get('time', float('inf')),        # Menor tiempo en empates
+                -x[1].get('balance_score', 0)          # Mayor balance en empates
+            )
+        )
+        
+        rankings = {}
+        
+        if len(sorted_algos) >= 1:
+            rankings[sorted_algos[0][0]] = '🥇'
+        
+        if len(sorted_algos) >= 2:
+            rankings[sorted_algos[1][0]] = '🥈'
+        
+        if len(sorted_algos) >= 3:
+            rankings[sorted_algos[2][0]] = '🥉'
+        
+        return rankings
+    
+    # Calculate rankings with tie-breaking
+    algo_rankings = calculate_ranking(results, best_algo)
+    
     perf_data = []
-    sorted_objs = sorted(objectives) if objectives else []
     
     for algo, result in results.items():
         obj = result.get('objective', float('inf'))
-        ranking = ''
-        if algo == best_algo:
-            ranking = '🥇'
-        elif len(sorted_objs) > 1 and obj == sorted_objs[1]:
-            ranking = '🥈'
+        ranking = algo_rankings.get(algo, '')
         
         perf_data.append({
             'Algoritmo': algo,

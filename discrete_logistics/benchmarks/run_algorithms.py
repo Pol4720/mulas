@@ -234,16 +234,16 @@ def run_benchmark(problems: Dict[str, Problem], resume: bool = True) -> pd.DataF
     
     # Lista de nombres de algoritmos a ejecutar
     algorithm_names = [
-        # "LargestDifferenceFirst",
-        # "BruteForce",
-        # "DynamicProgramming", 
-        # "BranchAndBound",
-        # "FirstFitDecreasing",
-        # "BestFitDecreasing",
-        # "WorstFitDecreasing",
-        # "RoundRobinGreedy",
-        # "LPT",
-        # "KK",
+        "LargestDifferenceFirst",
+        "BruteForce",
+        "DynamicProgramming", 
+        "BranchAndBound",
+        "FirstFitDecreasing",
+        "BestFitDecreasing",
+        "WorstFitDecreasing",
+        "RoundRobinGreedy",
+        "LPT",
+        "KK",
         "SimulatedAnnealing",
         "GeneticAlgorithm",
         "TabuSearch"

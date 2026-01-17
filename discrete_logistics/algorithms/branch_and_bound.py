@@ -84,10 +84,10 @@ class BranchAndBound(Algorithm):
     approximation_ratio = "Optimal (exact)"
     description = "Exact algorithm with intelligent pruning strategies"
     
-    MAX_ITERATIONS = 1_000_000
+    MAX_ITERATIONS = 10_000_000
     
     def __init__(self, track_steps: bool = False, verbose: bool = False,
-                 max_iterations: int = 1_000_000, time_limit: float = 60.0):
+                 max_iterations: int = 10_000_000, time_limit: float = 300.0):
         """
         Initialize Branch and Bound.
         
@@ -349,7 +349,7 @@ class BranchAndBoundDFS(Algorithm):
     description = "Branch and Bound with depth-first search"
     
     def __init__(self, track_steps: bool = False, verbose: bool = False,
-                 max_iterations: int = 500_000, time_limit: float = 30.0):
+                 max_iterations: int = 5_000_000, time_limit: float = 300.0):
         super().__init__(track_steps, verbose)
         self.max_iterations = max_iterations
         self.time_limit = time_limit

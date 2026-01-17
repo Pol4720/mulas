@@ -51,8 +51,8 @@ from discrete_logistics.algorithms.metaheuristics import (
 from discrete_logistics.benchmarks.runner import BenchmarkResult
 
 
-N_VALUES: List[int] = list(range(5, 51, 5))
-K_VALUES: List[int] = [3, 4, 5]
+N_VALUES: List[int] = list(range(5, 51, 3))
+K_VALUES: List[int] = [2, 3, 4, 5]
 TIME_LIMIT = 60.0  # seconds (1 minute per instance)
 SEED = 123
 OUT_DIR = Path(__file__).resolve().parent / "results"
@@ -204,11 +204,11 @@ def run_benchmark(problems: Dict[str, Problem], resume: bool = True) -> pd.DataF
     def create_algorithm(algo_name: str):
         """Crea una instancia fresca del algoritmo especificado."""
         if algo_name == "BruteForce":
-            return BruteForce(time_limit=TIME_LIMIT, max_items=14, track_steps=False, verbose=False)
+            return BruteForce(time_limit=70.0, max_items=14, track_steps=False, verbose=False)
         elif algo_name == "DynamicProgramming":
-            return DynamicProgramming(time_limit=TIME_LIMIT, track_steps=False, verbose=False)
+            return DynamicProgramming(time_limit=70.0, track_steps=False, verbose=False)
         elif algo_name == "BranchAndBound":
-            return BranchAndBound(time_limit=TIME_LIMIT, track_steps=False, verbose=False)
+            return BranchAndBound(time_limit=70.0, track_steps=False, verbose=False)
         elif algo_name == "FirstFitDecreasing":
             return FirstFitDecreasing(track_steps=False, verbose=False)
         elif algo_name == "BestFitDecreasing":
@@ -224,26 +224,26 @@ def run_benchmark(problems: Dict[str, Problem], resume: bool = True) -> pd.DataF
         elif algo_name == "KK":
             return MultiWayPartition(track_steps=False, verbose=False)
         elif algo_name == "SimulatedAnnealing":
-            return SimulatedAnnealing(track_steps=False, verbose=False, max_iterations=10000, initial_temp=100.0, cooling_rate=0.995)
+            return SimulatedAnnealing(track_steps=False, verbose=False, max_iterations=1000000, initial_temp=100.0, cooling_rate=0.995, time_limit=180.0)
         elif algo_name == "GeneticAlgorithm":
-            return GeneticAlgorithm(track_steps=False, verbose=False, population_size=50, generations=100)
+            return GeneticAlgorithm(track_steps=False, verbose=False, population_size=100, generations=1000, time_limit=180.0)
         elif algo_name == "TabuSearch":
-            return TabuSearch(track_steps=False, verbose=False, max_iterations=1000, tabu_tenure=10)
+            return TabuSearch(track_steps=False, verbose=False, max_iterations=10000, tabu_tenure=10, time_limit=180.0)
         else:
             raise ValueError(f"Unknown algorithm: {algo_name}")
     
     # Lista de nombres de algoritmos a ejecutar
     algorithm_names = [
-        "LargestDifferenceFirst",
-        "BruteForce",
-        "DynamicProgramming", 
-        "BranchAndBound",
-        "FirstFitDecreasing",
-        "BestFitDecreasing",
-        "WorstFitDecreasing",
-        "RoundRobinGreedy",
-        "LPT",
-        "KK",
+        # "LargestDifferenceFirst",
+        # "BruteForce",
+        # "DynamicProgramming", 
+        # "BranchAndBound",
+        # "FirstFitDecreasing",
+        # "BestFitDecreasing",
+        # "WorstFitDecreasing",
+        # "RoundRobinGreedy",
+        # "LPT",
+        # "KK",
         "SimulatedAnnealing",
         "GeneticAlgorithm",
         "TabuSearch"
@@ -276,12 +276,22 @@ def run_benchmark(problems: Dict[str, Problem], resume: bool = True) -> pd.DataF
     current_run = len(completed_runs)
     checkpoint_interval = 10  # Guardar cada 10 ejecuciones
     
+    # Rastrear el tamaño máximo de n procesado exitosamente por cada algoritmo
+    # Si excede timeout en un n, saltar todos los n mayores (independientemente de k)
+    max_n_per_algo = {}  # {algo_name: max_n_with_timeout}
+    
     for algo_name in algorithm_names:
         for problem_name, problem in problems.items():
             run_id = f"{algo_name}:{problem_name}"
             
             # Skip si ya está completado
             if run_id in completed_runs:
+                continue
+            
+            # Saltar si este algoritmo ya ha excedido el tiempo límite en un n menor o igual
+            # (aplica para cualquier k, no solo el k donde ocurrió el timeout)
+            if algo_name in max_n_per_algo and problem.n_items >= max_n_per_algo[algo_name]:
+                logging.info(f"⏭ Saltando {algo_name} en {problem_name} (n={problem.n_items} >= límite {max_n_per_algo[algo_name]} para cualquier k)")
                 continue
             
             current_run += 1
@@ -319,6 +329,10 @@ def run_benchmark(problems: Dict[str, Problem], resume: bool = True) -> pd.DataF
             except FutureTimeoutError:
                 elapsed = TIME_LIMIT
                 logging.warning("  ⏱ Timeout excedido; cancelando ejecución")
+                # Registrar este n como límite para futuras instancias del mismo algoritmo
+                if algo_name not in max_n_per_algo or problem.n_items < max_n_per_algo[algo_name]:
+                    max_n_per_algo[algo_name] = problem.n_items
+                    logging.warning(f"  ⚠ Límite registrado para {algo_name}: no procesaremos instancias con n > {problem.n_items}")
                 result = BenchmarkResult(
                     algorithm_name=algo_name,
                     problem_name=problem_name,

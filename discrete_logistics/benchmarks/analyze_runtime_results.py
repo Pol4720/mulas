@@ -24,7 +24,7 @@ from discrete_logistics.visualizations.plots import BenchmarkPlotter
 # Paths
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 INPUT_CSV = RESULTS_DIR / "runtime_vs_size.csv"
-OUTPUT_HTML = RESULTS_DIR / "runtime_vs_size.html"
+OUTPUT_HTML_BASE = RESULTS_DIR / "runtime_vs_size"
 STATS_CSV = RESULTS_DIR / "runtime_stats.csv"
 
 # Configure logging
@@ -120,7 +120,7 @@ def compute_statistics(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def generate_visualizations(df: pd.DataFrame) -> None:
-    """Generate interactive visualizations of the results."""
+    """Generate interactive visualizations of the results - one graph per k value."""
     logging.info("="*70)
     logging.info("GENERANDO VISUALIZACIONES")
     logging.info("="*70)
@@ -132,35 +132,59 @@ def generate_visualizations(df: pd.DataFrame) -> None:
         logging.warning("⚠ No hay datos exitosos para visualizar")
         return
     
-    logging.info("Generando gráfico interactivo de runtime vs tamaño...")
+    # Obtener valores únicos de k y ordenarlos
+    k_values = sorted(df_plot['k'].unique())
+    
+    if len(k_values) == 0:
+        logging.warning("⚠ No hay valores de k en los datos")
+        return
+    
+    logging.info(f"Generando {len(k_values)} gráficos (uno por cada valor de k)...")
+    logging.info("")
     
     plotter = BenchmarkPlotter()
-    fig = plotter.plot_scaling_analysis(
-        df_plot,
-        x_var="n_items",
-        y_var="execution_time",
-        title="Runtime vs Instance Size (Escala Logarítmica) - Todos los Algoritmos",
-    )
-    
-    # Personalizar el gráfico
-    fig.update_yaxes(type="log", title="Tiempo de Ejecución (s, escala log)")
-    fig.update_xaxes(title="Número de Items (n)")
-    fig.update_layout(
-        height=700,
-        hovermode='x unified',
-        legend=dict(
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=0.01
-        )
-    )
-    
-    # Guardar gráfico
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    fig.write_html(OUTPUT_HTML)
-    logging.info(f"  ✓ Gráfico guardado: {OUTPUT_HTML}")
-    logging.info(f"    Abrir en navegador para visualización interactiva")
+    
+    # Generar un gráfico para cada valor de k
+    for k_val in k_values:
+        # Filtrar datos para este valor de k
+        df_k = df_plot[df_plot['k'] == k_val].copy()
+        
+        if len(df_k) == 0:
+            logging.warning(f"  ⚠ No hay datos para k={k_val}")
+            continue
+        
+        logging.info(f"  Generando gráfico para k={k_val}...")
+        
+        fig = plotter.plot_scaling_analysis(
+            df_k,
+            x_var="n_items",
+            y_var="execution_time",
+            title=f"Runtime vs Instance Size (Escala Logarítmica) - k={k_val}",
+        )
+        
+        # Personalizar el gráfico
+        fig.update_yaxes(type="log", title="Tiempo de Ejecución (s, escala log)")
+        fig.update_xaxes(title="Número de Items (n)")
+        fig.update_layout(
+            height=700,
+            hovermode='x unified',
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.01
+            )
+        )
+        
+        # Guardar gráfico con nombre específico para cada k
+        output_file = OUTPUT_HTML_BASE.parent / f"runtime_vs_size_k{k_val}.html"
+        fig.write_html(output_file)
+        logging.info(f"    ✓ Gráfico guardado: {output_file}")
+    
+    logging.info("")
+    logging.info(f"✓ Todos los gráficos generados en: {RESULTS_DIR}")
+    logging.info(f"  Abrir los archivos HTML en navegador para visualización interactiva")
     logging.info("")
 
 
@@ -227,7 +251,7 @@ def print_summary(df: pd.DataFrame) -> None:
     logging.info(f"✗  Con errores: {error_runs} ({100*error_runs/total_runs:.1f}%)")
     logging.info("")
     logging.info("📁 Archivos generados:")
-    logging.info(f"   - Gráfico interactivo: {OUTPUT_HTML}")
+    logging.info(f"   - Gráficos interactivos: {RESULTS_DIR}/runtime_vs_size_k*.html")
     logging.info(f"   - Estadísticas: {STATS_CSV}")
     logging.info("")
     logging.info("💡 Para ver el gráfico interactivo, abre el archivo HTML en un navegador")

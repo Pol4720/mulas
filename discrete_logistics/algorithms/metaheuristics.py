@@ -67,7 +67,10 @@ class SimulatedAnnealing(Algorithm):
         min_temp: float = 0.01,
         cooling_rate: float = 0.995,
         max_iterations: int = 10000,
-        neighborhood_size: int = 5
+        neighborhood_size: int = 5,
+        time_limit: float = 180.0,
+        convergence_window: int = 100,
+        convergence_threshold: float = 1e-6
     ):
         """
         Initialize Simulated Annealing.
@@ -78,6 +81,9 @@ class SimulatedAnnealing(Algorithm):
             cooling_rate: Temperature decay factor (0 < α < 1)
             max_iterations: Maximum iterations
             neighborhood_size: Number of neighbors to consider per iteration
+            time_limit: Maximum execution time in seconds (default: 3 minutes)
+            convergence_window: Number of iterations to check for convergence
+            convergence_threshold: Threshold for convergence detection
         """
         super().__init__(track_steps, verbose)
         self.initial_temp = initial_temp
@@ -85,6 +91,9 @@ class SimulatedAnnealing(Algorithm):
         self.cooling_rate = cooling_rate
         self.max_iterations = max_iterations
         self.neighborhood_size = neighborhood_size
+        self.time_limit = time_limit
+        self.convergence_window = convergence_window
+        self.convergence_threshold = convergence_threshold
         
         # Statistics
         self.accepted_moves = 0
@@ -124,6 +133,19 @@ class SimulatedAnnealing(Algorithm):
         
         iteration = 0
         while T > self.min_temp and iteration < self.max_iterations:
+            # Check timeout
+            if self._get_elapsed_time() > self.time_limit:
+                self._log(f"Time limit reached ({self.time_limit}s)")
+                break
+            
+            # Check convergence
+            if iteration > self.convergence_window:
+                recent_objectives = self.objective_history[-self.convergence_window:]
+                obj_std = np.std(recent_objectives)
+                if obj_std < self.convergence_threshold:
+                    self._log(f"Converged at iteration {iteration} (std={obj_std:.6f})")
+                    break
+            
             iteration += 1
             self._iterations += 1
             
@@ -324,7 +346,10 @@ class GeneticAlgorithm(Algorithm):
         crossover_rate: float = 0.8,
         mutation_rate: float = 0.1,
         tournament_size: int = 3,
-        elitism_count: int = 2
+        elitism_count: int = 2,
+        time_limit: float = 180.0,
+        convergence_window: int = 20,
+        convergence_threshold: float = 1e-6
     ):
         """
         Initialize Genetic Algorithm.
@@ -336,6 +361,9 @@ class GeneticAlgorithm(Algorithm):
             mutation_rate: Probability of mutation per gene
             tournament_size: Size of tournament for selection
             elitism_count: Number of best individuals to preserve
+            time_limit: Maximum execution time in seconds (default: 3 minutes)
+            convergence_window: Number of generations to check for convergence
+            convergence_threshold: Threshold for convergence detection
         """
         super().__init__(track_steps, verbose)
         self.population_size = population_size
@@ -344,6 +372,9 @@ class GeneticAlgorithm(Algorithm):
         self.mutation_rate = mutation_rate
         self.tournament_size = tournament_size
         self.elitism_count = elitism_count
+        self.time_limit = time_limit
+        self.convergence_window = convergence_window
+        self.convergence_threshold = convergence_threshold
         
         self.fitness_history = []
         self.diversity_history = []
@@ -382,6 +413,19 @@ class GeneticAlgorithm(Algorithm):
         
         # Evolution loop
         for gen in range(self.generations):
+            # Check timeout
+            if self._get_elapsed_time() > self.time_limit:
+                self._log(f"Time limit reached ({self.time_limit}s) at generation {gen}")
+                break
+            
+            # Check convergence
+            if gen > self.convergence_window:
+                recent_fitness = self.fitness_history[-self.convergence_window:]
+                fitness_std = np.std(recent_fitness)
+                if fitness_std < self.convergence_threshold:
+                    self._log(f"Converged at generation {gen} (std={fitness_std:.6f})")
+                    break
+            
             self._iterations += 1
             
             # Create new population
@@ -688,7 +732,10 @@ class TabuSearch(Algorithm):
         tabu_tenure: int = 20,
         aspiration: bool = True,
         intensification_freq: int = 50,
-        diversification_freq: int = 100
+        diversification_freq: int = 100,
+        time_limit: float = 180.0,
+        convergence_window: int = 50,
+        convergence_threshold: float = 1e-6
     ):
         """
         Initialize Tabu Search.
@@ -699,6 +746,9 @@ class TabuSearch(Algorithm):
             aspiration: Allow tabu moves if they improve best
             intensification_freq: Frequency of intensification
             diversification_freq: Frequency of diversification
+            time_limit: Maximum execution time in seconds (default: 3 minutes)
+            convergence_window: Number of iterations to check for convergence
+            convergence_threshold: Threshold for convergence detection
         """
         super().__init__(track_steps, verbose)
         self.max_iterations = max_iterations
@@ -706,6 +756,9 @@ class TabuSearch(Algorithm):
         self.aspiration = aspiration
         self.intensification_freq = intensification_freq
         self.diversification_freq = diversification_freq
+        self.time_limit = time_limit
+        self.convergence_window = convergence_window
+        self.convergence_threshold = convergence_threshold
         
         self.objective_history = []
     
@@ -751,6 +804,19 @@ class TabuSearch(Algorithm):
         no_improvement_count = 0
         
         for iteration in range(self.max_iterations):
+            # Check timeout
+            if self._get_elapsed_time() > self.time_limit:
+                self._log(f"Time limit reached ({self.time_limit}s)")
+                break
+            
+            # Check convergence
+            if iteration > self.convergence_window:
+                recent_objectives = self.objective_history[-self.convergence_window:]
+                obj_std = np.std(recent_objectives)
+                if obj_std < self.convergence_threshold:
+                    self._log(f"Converged at iteration {iteration} (std={obj_std:.6f})")
+                    break
+            
             self._iterations += 1
             
             # Generate and evaluate all neighbors

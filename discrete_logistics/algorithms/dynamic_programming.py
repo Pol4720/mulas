@@ -4,13 +4,14 @@ Dynamic Programming Algorithm for Balanced Multi-Bin Packing.
 For small instances, DP can find optimal solutions by exploring
 the state space systematically.
 
-Note: Due to the problem's complexity, DP is only practical for
-very small instances (n ≤ 15, k ≤ 4).
+Note: Due to the problem's complexity, DP may take significant time
+for large instances. A 5-minute timeout is enforced.
 
 WARNING: Complexity is O(k · 3^n), which means:
 - n=10: ~59,000 operations (instant)
 - n=15: ~14 million operations (seconds)  
 - n=20: ~3.5 billion operations (minutes to hours)
+- Timeout after 5 minutes if no solution found
 """
 
 from typing import List, Dict, Tuple, Optional, Set
@@ -53,10 +54,9 @@ class DynamicProgramming(Algorithm):
     Note: We store the full value tuple (not just max/min) because with
     heterogeneous capacities, feasibility depends on the specific bin.
     
-    PRACTICAL LIMITS (for reasonable execution time):
-    - n ≤ 12: Fast (< 1 second)
-    - n ≤ 15: Acceptable (< 30 seconds)
-    - n > 15: Falls back to greedy (too slow)
+    EXECUTION TIME LIMIT:
+    - 5 minutes timeout enforced
+    - Will raise TimeoutError if exceeded
     """
     
     time_complexity = "O(k² · 3^n)"
@@ -64,15 +64,11 @@ class DynamicProgramming(Algorithm):
     approximation_ratio = "Optimal (exact)"
     description = "Exact algorithm using dynamic programming, feasible only for small instances"
     
-    MAX_ITEMS = 15  # Practical limit for reasonable time
-    MAX_BINS = 5
-    DEFAULT_TIMEOUT = 60.0  # seconds
+    DEFAULT_TIMEOUT = 300.0  # seconds (5 minutes)
     
     def __init__(self, track_steps: bool = False, verbose: bool = False,
-                 max_items: int = 15, max_bins: int = 5, time_limit: float = 60.0):
+                 time_limit: float = 300.0):
         super().__init__(track_steps, verbose)
-        self.max_items = min(max_items, self.MAX_ITEMS)
-        self.max_bins = min(max_bins, self.MAX_BINS)
         self.time_limit = time_limit
         self._start_time = None
     
@@ -90,15 +86,6 @@ class DynamicProgramming(Algorithm):
         self._start_timer()
         self._start_time = time.time()
         self._log(f"Starting DP on {problem.n_items} items, {problem.num_bins} bins")
-        
-        # Check size limits - be more conservative
-        if problem.n_items > self.max_items:
-            self._log(f"Instance too large for DP (n={problem.n_items} > {self.max_items}), using greedy")
-            return self._fallback_greedy(problem)
-        
-        if problem.num_bins > self.max_bins:
-            self._log(f"Too many bins for DP (k={problem.num_bins} > {self.max_bins}), using greedy")
-            return self._fallback_greedy(problem)
         
         # Estimate complexity and warn
         estimated_ops = problem.num_bins * (3 ** problem.n_items)
@@ -128,7 +115,7 @@ class DynamicProgramming(Algorithm):
         
         if best_assignment is None:
             self._log("No feasible partition found!")
-            return self._fallback_greedy(problem)
+            raise ValueError("No feasible partition exists for this problem")
         
         # Build solution from assignment
         solution = problem.create_empty_solution(self.name)
@@ -376,19 +363,6 @@ class DynamicProgramming(Algorithm):
                 result.append(item.id)
         return result
     
-    def _fallback_greedy(self, problem: Problem) -> Solution:
-        """Fall back to greedy when DP is infeasible."""
-        from .greedy import BestFitDecreasing
-        
-        self._log("Falling back to Best Fit Decreasing")
-        greedy = BestFitDecreasing(track_steps=self.track_steps, verbose=self.verbose)
-        solution = greedy.solve(problem)
-        solution.algorithm_name = f"{self.name} (fallback to {greedy.name})"
-        solution.metadata["fallback"] = True
-        
-        return solution
-
-
 class DPState:
     """
     Helper class for DP state management.

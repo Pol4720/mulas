@@ -74,6 +74,10 @@ from discrete_logistics.algorithms.metaheuristics import (
 from discrete_logistics.algorithms.brute_force import BruteForce
 from discrete_logistics.algorithms.branch_and_bound import BranchAndBound
 from discrete_logistics.algorithms.dynamic_programming import DynamicProgramming
+from discrete_logistics.algorithms.approximation import (
+    LPTApproximation,
+    MultiWayPartition
+)
 
 
 def init_session_state():
@@ -262,6 +266,8 @@ def create_algorithm_instance(algo_name: str, params: Dict[str, Any]):
         'WorstFitDecreasing': WorstFitDecreasing,
         'RoundRobinGreedy': RoundRobinGreedy,
         'LargestDifferenceFirst': LargestDifferenceFirst,
+        'LPTApproximation': LPTApproximation,
+        'MultiWayPartition': MultiWayPartition,
         'BruteForce': BruteForce,
         'SimulatedAnnealing': lambda: SimulatedAnnealing(**params),
         'GeneticAlgorithm': lambda: GeneticAlgorithm(**params),

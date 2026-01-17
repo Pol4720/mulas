@@ -981,6 +981,20 @@ class AlgorithmSelector:
             'description': 'Prioriza reducir la mayor diferencia de valor entre contenedores.',
             'params': {}
         },
+        'LPTApproximation': {
+            'name': 'LPT (Longest Processing Time)',
+            'category': 'Aproximación',
+            'complexity': 'O(n log n + n log k)',
+            'description': 'Algoritmo clásico de aproximación para makespan. Ordena ítems descendentemente y asigna cada uno al contenedor con mínimo valor actual.',
+            'params': {}
+        },
+        'MultiWayPartition': {
+            'name': 'KK (Karmarkar-Karp)',
+            'category': 'Aproximación',
+            'complexity': 'O(n log n)',
+            'description': 'Algoritmo de diferenciación para particionamiento multi-vía. Excelente para k=2 contenedores con garantía teórica O(1/n^θ(log n)).',
+            'params': {}
+        },
         'BruteForce': {
             'name': 'Fuerza Bruta',
             'category': 'Exacto',
@@ -1050,7 +1064,7 @@ class AlgorithmSelector:
         st.markdown("### ⚙️ Selección de Algoritmos")
         
         # Category filter
-        categories = ['Todos', 'Voraz', 'Metaheurística', 'Exacto']
+        categories = ['Todos', 'Voraz', 'Aproximación', 'Metaheurística', 'Exacto']
         selected_category = st.radio(
             "Filtrar por Categoría",
             options=categories,

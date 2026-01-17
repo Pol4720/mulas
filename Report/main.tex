@@ -453,7 +453,9 @@ First Fit Decreasing (FFD) & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
 Best Fit Decreasing (BFD) & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
 Worst Fit Decreasing (WFD) & $O(n \log n + n \log k)$ & $O(n + k)$ \\
 Round Robin Greedy & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+Largest Difference First (LDF) & $O(n^2 \cdot k)$ & $O(n + k)$ \\
 LPT Balanced & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+Karmarkar-Karp (KK) & $O(n \log n)$ & $O(n)$ \\
 Programación Dinámica & $O(k^2 \cdot 3^n)$ & $O(k \cdot 2^n)$ \\
 Branch and Bound & $O(k^n)$ peor caso & $O(n \cdot k)$ \\
 Simulated Annealing & $O(I \cdot n)$ & $O(n)$ \\
@@ -781,6 +783,206 @@ El algoritmo Longest Processing Time (LPT) adaptado para balanceo asigna cada í
 \end{algorithmic}
 \end{algorithm}
 
+\subsubsection{Largest Difference First (LDF)}
+
+El algoritmo LDF es un enfoque greedy que en cada paso selecciona la asignación (ítem, contenedor) que minimiza la diferencia máxima resultante entre contenedores.
+
+\textbf{Intuición:} A diferencia de los algoritmos que procesan ítems en orden fijo, LDF evalúa todas las combinaciones posibles en cada paso y elige la asignación que mejor balancea la carga actual.
+
+\textbf{Características:}
+\begin{itemize}
+    \item \textbf{Complejidad temporal:} $O(n^2 \cdot k)$ - cuadrática en el número de ítems
+    \item \textbf{Calidad:} Sin garantía teórica de aproximación, pero buenos resultados empíricos
+    \item \textbf{Aplicabilidad:} Mejor para instancias pequeñas a medianas donde el balance es crítico
+\end{itemize}
+
+\begin{algorithm}[H]
+\caption{Largest Difference First}
+\begin{algorithmic}[1]
+\Procedure{LDF}{$items, k, C_1, \ldots, C_k$}
+    \State $bins \gets [\text{Bin}(j, C_j) \text{ for } j \in 1..k]$
+    \State $unassigned \gets items$ \Comment{Conjunto de ítems sin asignar}
+    
+    \While{$unassigned \neq \emptyset$}
+        \State $best\_item \gets \text{null}$
+        \State $best\_bin \gets \text{null}$
+        \State $best\_diff \gets \infty$
+        
+        \Comment{Evaluar todas las combinaciones (ítem, bin)}
+        \For{$item \in unassigned$}
+            \For{$j \in 1..k$}
+                \If{$\text{weight}(bins[j]) + item.weight \leq C_j$}
+                    \Comment{Simular asignación}
+                    \State $current\_values \gets [\text{value}(bins[i]) \text{ for } i \in 1..k]$
+                    \State $current\_values[j] \gets current\_values[j] + item.value$
+                    \State $diff \gets \max(current\_values) - \min(current\_values)$
+                    
+                    \If{$diff < best\_diff$}
+                        \State $best\_diff \gets diff$
+                        \State $best\_item \gets item$
+                        \State $best\_bin \gets j$
+                    \EndIf
+                \EndIf
+            \EndFor
+        \EndFor
+        
+        \If{$best\_item \neq \text{null}$}
+            \State $bins[best\_bin].\text{add}(best\_item)$
+            \State $unassigned.\text{remove}(best\_item)$
+        \Else
+            \State \textbf{break} \Comment{No hay asignación factible}
+        \EndIf
+    \EndWhile
+    
+    \State \Return $bins$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Diferencia con otros algoritmos greedy:}
+\begin{itemize}
+    \item \textbf{FFD/BFD/WFD:} Procesan ítems en orden predeterminado (por peso o valor)
+    \item \textbf{LDF:} Selecciona dinámicamente el siguiente ítem basándose en el estado actual
+    \item \textbf{Trade-off:} Mayor tiempo de cómputo ($O(n^2 k)$ vs $O(n \log n)$) pero potencialmente mejor balance
+\end{itemize}
+
+\subsection{Algoritmos de Aproximación}
+
+\subsubsection{Karmarkar-Karp (KK) para Particionamiento Multi-Vía}
+
+El algoritmo Karmarkar-Karp es un método de diferenciación clásico para el problema de particionamiento de números. Para el caso de 2 contenedores, tiene garantías teóricas de aproximación $O(1/n^{\Theta(\log n)})$.
+
+\textbf{Idea fundamental:} En lugar de asignar ítems directamente a contenedores, KK reemplaza iterativamente los dos valores más grandes con su diferencia, simulando la colocación de estos elementos en contenedores diferentes.
+
+\textbf{Complejidad:}
+\begin{itemize}
+    \item \textbf{Temporal:} $O(n \log n)$ con heap
+    \item \textbf{Espacial:} $O(n)$
+    \item \textbf{Ratio de aproximación:} $O(1/n^{\Theta(\log n)})$ para $k=2$
+\end{itemize}
+
+\begin{algorithm}[H]
+\caption{Karmarkar-Karp (KK) - Caso 2 contenedores}
+\begin{algorithmic}[1]
+\Procedure{KK-TwoWay}{$items, C_1, C_2$}
+    \State $heap \gets \text{MaxHeap}()$
+    
+    \Comment{Inicializar heap con pares (valor, [ids de ítems])}
+    \For{$item \in items$}
+        \State $heap.\text{push}(-item.value, [item.id])$ \Comment{Negativo para max-heap}
+    \EndFor
+    
+    \Comment{Proceso de diferenciación}
+    \While{$|heap| > 1$}
+        \State $(neg\_val_1, items_1) \gets heap.\text{pop}()$
+        \State $(neg\_val_2, items_2) \gets heap.\text{pop}()$
+        \State $val_1 \gets -neg\_val_1$, $val_2 \gets -neg\_val_2$
+        
+        \Comment{Combinar grupos y calcular diferencia}
+        \State $diff \gets |val_1 - val_2|$
+        \State $combined \gets items_1 \cup items_2$
+        
+        \If{$diff > 0$}
+            \State $heap.\text{push}(-diff, combined)$
+        \EndIf
+    \EndWhile
+    
+    \Comment{Reconstruir solución desde agrupaciones}
+    \State $bins \gets [\text{Bin}(1, C_1), \text{Bin}(2, C_2)]$
+    
+    \If{$|heap| > 0$}
+        \State $(-, final\_group) \gets heap.\text{pop}()$
+        \State $final\_set \gets \text{set}(final\_group)$
+    \Else
+        \State $final\_set \gets \emptyset$
+    \EndIf
+    
+    \Comment{Asignar ítems a bins respetando capacidades}
+    \For{$item \in items$}
+        \If{$item.id \in final\_set$}
+            \If{$bins[0].\text{can\_fit}(item)$}
+                \State $bins[0].\text{add}(item)$
+            \Else
+                \State $bins[1].\text{add}(item)$
+            \EndIf
+        \Else
+            \If{$bins[1].\text{can\_fit}(item)$}
+                \State $bins[1].\text{add}(item)$
+            \Else
+                \State $bins[0].\text{add}(item)$
+            \EndIf
+        \EndIf
+    \EndFor
+    
+    \State \Return $bins$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Extensión a $k > 2$ contenedores:}
+
+Para más de 2 contenedores, KK utiliza un enfoque greedy con look-ahead: ordena los ítems por valor decreciente y asigna cada uno al contenedor que minimiza la diferencia max-min resultante.
+
+\begin{algorithm}[H]
+\caption{Karmarkar-Karp (KK) - Caso k-way}
+\begin{algorithmic}[1]
+\Procedure{KK-MultiWay}{$items, k, C_1, \ldots, C_k$}
+    \State $sorted\_items \gets \text{sort}(items, \text{key}=value, \text{desc}=True)$
+    \State $bins \gets [\text{Bin}(j, C_j) \text{ for } j \in 1..k]$
+    
+    \For{$item \in sorted\_items$}
+        \State $best\_bin \gets \text{null}$
+        \State $best\_diff \gets \infty$
+        
+        \For{$j \in 1..k$}
+            \If{$bins[j].\text{can\_fit}(item)$}
+                \Comment{Simular asignación}
+                \State $values \gets [\text{value}(bins[i]) \text{ for } i \in 1..k]$
+                \State $values[j] \gets values[j] + item.value$
+                \State $diff \gets \max(values) - \min(values)$
+                
+                \If{$diff < best\_diff$}
+                    \State $best\_diff \gets diff$
+                    \State $best\_bin \gets j$
+                \EndIf
+            \EndIf
+        \EndFor
+        
+        \If{$best\_bin \neq \text{null}$}
+            \State $bins[best\_bin].\text{add}(item)$
+        \EndIf
+    \EndFor
+    
+    \State \Return $bins$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Propiedades teóricas:}
+
+\begin{theorem}[Karmarkar-Karp para 2-Partition]
+Para el problema de 2-particionamiento sin restricciones de capacidad, el algoritmo KK produce una solución con diferencia $D$ tal que:
+\[
+D = O\left(\frac{\max_i v_i}{n^{\Theta(\log n)}}\right)
+\]
+donde $v_i$ es el valor del ítem $i$.
+\end{theorem}
+
+\textbf{Ventajas y desventajas:}
+\begin{itemize}
+    \item \textbf{Ventajas:}
+    \begin{itemize}
+        \item Excelente para $k=2$ con garantía teórica
+        \item Muy eficiente: $O(n \log n)$
+        \item No requiere parámetros de configuración
+    \end{itemize}
+    \item \textbf{Desventajas:}
+    \begin{itemize}
+        \item Para $k > 2$, se reduce a enfoque greedy sin garantías
+        \item Puede tener dificultades con restricciones de capacidad muy ajustadas
+        \item La reconstrucción de la solución puede violar capacidades
+    \end{itemize}
+\end{itemize}
 
 \subsection{Branch and Bound}
 

@@ -197,7 +197,9 @@ Se requiere trade-off: \highlight{optimalidad vs velocidad}
     \item FFD (First Fit Decreasing)
     \item BFD (Best Fit Decreasing)
     \item WFD (Worst Fit Decreasing)
-    \item LPT Balanced
+    \item LDF (Largest Difference First)
+    \item LPT Balanced (Longest Processing Time)
+    \item KK (Karmarkar-Karp) para particionamiento
     \item Round Robin balanceado
 \end{itemize}
 
@@ -209,7 +211,7 @@ Se requiere trade-off: \highlight{optimalidad vs velocidad}
 \end{itemize}
 
 \vspace{0.2cm}
-\small
+\scriptsize
 \highlight{Nota:} Greedy prioriza velocidad; metaheurísticas balancean calidad/tiempo; exactos garantizan optimalidad en instancias pequeñas.
 
 \end{frame}
@@ -304,36 +306,73 @@ Se requiere trade-off: \highlight{optimalidad vs velocidad}
 \end{frame}
 
 \begin{frame}
-\frametitle{Algoritmos Greedy - Estrategias Locales}
+\frametitle{Algoritmos Greedy - Primera Parte}
+\footnotesize
 
-\textbf{Característica:} Decisiones locales sin reconsideración, \highlight{extremadamente rápidos}
+\textbf{Estrategia común:} Ordena ítems y asigna cada uno usando una regla local.
 
-\vspace{0.3cm}
-\textbf{First Fit Decreasing (FFD) - Minimalista:}
+\textbf{First Fit Decreasing (FFD):}
 \begin{itemize}
-    \item Ordenar ítems por peso (descendente)
-    \item Asignar al primer contenedor que quepa
+    \item Ordena por peso decreciente
+    \item Asigna al \textbf{primer contenedor} con espacio disponible
+    \item Tiempo: $O(n \log n + n \cdot k)$ | Gap: 5-15\%
 \end{itemize}
 
-\vspace{0.2cm}
-\textbf{Best Fit Decreasing (BFD) - Equilibrado:}
+\textbf{Best Fit Decreasing (BFD):}
 \begin{itemize}
-    \item Ordenar ítems por valor (descendente)
-    \item Asignar al contenedor que minimiza diferencia resultante
+    \item Ordena por valor decreciente
+    \item Asigna al contenedor que \textbf{minimiza diferencia} resultante
+    \item Tiempo: $O(n \log n + n \cdot k)$ | Gap: 4-12\%
 \end{itemize}
 
-\vspace{0.2cm}
-\textbf{Round Robin / LPT Balanced:}
+\textbf{Worst Fit Decreasing (WFD):}
 \begin{itemize}
-    \item Ordenar ítems por valor (descendente)
-    \item Asignar siempre al contenedor con menor carga actual
+    \item Ordena por valor decreciente
+    \item Asigna al contenedor con \textbf{mayor espacio libre}
+    \item Distribución uniforme | Tiempo: $O(n \log n + n \log k)$ | Gap: 5-15\%
 \end{itemize}
 
-\vspace{0.3cm}
-\textbf{Complejidad:} $O(n \log n + n \cdot k)$ para todos
+\textbf{LPT Balanced:}
+\begin{itemize}
+    \item \textbf{Longest Processing Time} para balance
+    \item Asigna al contenedor con \textbf{menor valor} actual
+    \item Muy rápido | Tiempo: $O(n \log n + n \log k)$ | Gap: 3-10\%
+\end{itemize}
 
-\vspace{0.2cm}
-\textbf{Trade-off:} \highlight{Velocidad} (milisegundos) vs \highlight{Optimalidad} (3-15\% gap)
+\end{frame}
+
+\begin{frame}
+\frametitle{Algoritmos Greedy y Aproximación - Segunda Parte}
+\footnotesize
+
+\textbf{Round Robin Greedy:}
+\begin{itemize}
+    \item Distribución secuencial por \textbf{mínimo valor actual}
+    \item Tiempo: $O(n \log n + n \log k)$ | Gap: 4-14\%
+\end{itemize}
+
+\textbf{Largest Difference First (LDF):}
+\begin{itemize}
+    \item En cada paso, \textbf{evalúa todas combinaciones} (ítem, contenedor)
+    \item Elige la que \textbf{minimiza diferencia} resultante
+    \item Más lento pero mejor balance
+    \item Tiempo: $O(n^2 \cdot k)$ | Gap: 2-8\%
+\end{itemize}
+
+\textbf{Karmarkar-Karp (KK) - Particionamiento:}
+\begin{itemize}
+    \item Algoritmo clásico de \textbf{diferenciación}
+    \item Combina valores: reemplaza dos máximos por su diferencia
+    \item Excelente para 2 contenedores
+    \item Tiempo: $O(n \log n)$ | Gap: 2-6\%
+\end{itemize}
+
+\textbf{Resumen Greedy:}
+\begin{itemize}
+    \item \highlight{Ventaja:} Muy rápidos, $O(n \log n)$
+    \item \highlight{Desventaja:} Gap 2-15\%, sin garantías teóricas
+    \item \highlight{Uso:} Baseline rápido, problemas grandes
+\end{itemize}
 
 \end{frame}
 
@@ -361,11 +400,12 @@ Simulated Annealing, Algoritmos Genéticos, Búsqueda Tabú
 \begin{frame}
 \frametitle{Análisis de Complejidad - Comparativa}
 
+\small
 \begin{center}
 \textbf{Complejidad temporal y espacial de los algoritmos implementados}
 \end{center}
 
-\vspace{0.3cm}
+\vspace{0.1cm}
 \small
 \begin{center}
 \begin{tabular}{lcc}
@@ -376,8 +416,10 @@ Fuerza Bruta & $O(k^n \cdot n)$ & $O(n + k)$ \\
 FFD & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
 BFD & $O(n \log n + n \cdot k)$ & $O(n + k)$ \\
 WFD & $O(n \log n + n \log k)$ & $O(n + k)$ \\
-Round Robin & $O(n \log n + n \log k)$ & $O(n + k)$ \\
 LPT Balanced & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+Round Robin & $O(n \log n + n \log k)$ & $O(n + k)$ \\
+LDF & $O(n^2 \cdot k)$ & $O(n + k)$ \\
+KK (Karmarkar-Karp) & $O(n \log n)$ & $O(n)$ \\
 Prog. Dinámica & $O(k^2 \cdot 3^n)$ & $O(k \cdot 2^n)$ \\
 Branch \& Bound & $O(k^n)$ peor caso & $O(n \cdot k)$ \\
 Simulated Annealing & $O(I \cdot n)$ & $O(n)$ \\
@@ -388,7 +430,7 @@ Tabu Search & $O(I \cdot N)$ & $O(n + T)$ \\
 \end{center}
 
 \vspace{0.3cm}
-\normalsize
+\small
 \textbf{Leyenda:} $n$=ítems, $k$=contenedores, $I$=iteraciones, $G$=generaciones, $P$=población, $N$=vecindario, $T$=lista tabú
 
 \end{frame}
@@ -457,7 +499,7 @@ Eje X: número de ítems
 \frametitle{Resumen Comparativo}
 
 \centering
-\small
+\footnotesize
 \begin{tabular}{|l|c|c|c|l|}
 \toprule
 \textbf{Algoritmo} & \textbf{Óptimo} & \textbf{Velocidad} & \textbf{Rango} & \textbf{Aplicación} \\
@@ -473,7 +515,9 @@ Prog. Dinámica & Sí & Media & $n < 20$ & Instancias pequeñas con subproblemas
 FFD (First Fit Dec.) & No & Muy rápida & Todos & Baseline rápido, gap 5-15\% \\
 BFD (Best Fit Dec.) & No & Muy rápida & Todos & Equilibrio simple, gap 4-12\% \\
 WFD (Worst Fit Dec.) & No & Muy rápida & Todos & Distribución balanceada, gap 5-15\% \\
+LDF (Largest Diff. First) & No & Rápida & Todos & Balance óptimo, gap 2-8\% \\
 LPT Balanced & No & Muy rápida & Todos & Greedy mejorado, gap 3-10\% \\
+KK (Karmarkar-Karp) & No & Muy rápida & Todos & Particionamiento, gap 2-6\% \\
 Round Robin & No & Muy rápida & Todos & Distribución uniforme, gap 4-14\% \\
 \midrule
 \multicolumn{5}{|l|}{\textbf{Metaheurísticas (Búsqueda inteligente, mejor calidad)}} \\
@@ -502,11 +546,11 @@ Búsqueda Tabú & No & Rápida & Todos & Mejor calidad promedio, gap 0.2-1.5\% \
 \begin{itemize}
     \item Instancias pequeñas: B\&B o DP
     \item Problemas reales: Metaheurísticas
-    \item Baseline rápido: Greedy
+    \item Baseline rápido: Greedy (FFD, LPT, KK, LDF)
 \end{itemize}
 
 \vspace{0.3cm}
-\highlight{3. Herramientas:} 11 algoritmos, dashboard interactivo, benchmarking
+\highlight{3. Herramientas:} 14 algoritmos, dashboard interactivo, benchmarking
 
 \vspace{0.3cm}
 \highlight{4. Aplicaciones:} Logística, distribución de carga, computación distribuida

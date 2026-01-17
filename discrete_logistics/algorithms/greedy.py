@@ -422,16 +422,21 @@ class LargestDifferenceFirst(Algorithm):
                     }
                 )
             else:
-                # Fallback: assign first unassigned to first available bin
+                # Fallback: try to assign any remaining item to any available bin
+                assigned_any = False
                 for item in unassigned:
                     for bin in bins:
                         if bin.can_fit(item):
                             bin.add_item(item)
                             unassigned.remove(item)
                             self._log(f"Fallback: assigned item {item.id} to bin {bin.id}")
+                            assigned_any = True
                             break
-                    break
-                else:
+                    if assigned_any:
+                        break
+                
+                if not assigned_any:
+                    # No item could be assigned - exit to prevent infinite loop
                     self._log("Warning: Could not assign remaining items!")
                     break
         

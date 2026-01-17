@@ -300,7 +300,8 @@ class BenchmarkRunner:
         # Check capacity constraints
         for bin_obj in solution.bins:
             total_weight = sum(item.weight for item in bin_obj.items)
-            if total_weight > problem.bin_capacity:
+            # Use the capacity from the bin object itself
+            if total_weight > bin_obj.capacity:
                 return False
         
         return True
@@ -315,7 +316,7 @@ class BenchmarkRunner:
         bin_values = [sum(item.value for item in bin_obj.items) 
                      for bin_obj in solution.bins]
         
-        total_capacity = problem.bin_capacity * len(solution.bins)
+        total_capacity = sum(problem.bin_capacities)
         total_weight = sum(bin_weights)
         
         return {

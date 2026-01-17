@@ -23,7 +23,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 # Paths
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
-OUTPUT_PNG = RESULTS_DIR / "complexity_orders_comparison.png"
+OUTPUT_PNG_LOG = RESULTS_DIR / "complexity_orders_logarithmic.png"
+OUTPUT_PNG_LINEAR = RESULTS_DIR / "complexity_orders_linear.png"
 
 # Configure logging
 logging.basicConfig(
@@ -132,11 +133,12 @@ def plot_complexity_orders():
     logging.info("✓ Valores calculados")
     logging.info("")
     
-    # Crear figura con 2 subplots: uno para todos, otro sin exponenciales
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    # --- GRÁFICO 1: Todos los algoritmos (escala logarítmica) ---
+    logging.info("="*70)
+    logging.info("GRÁFICO 1: TODOS LOS ALGORITMOS (ESCALA LOGARÍTMICA)")
+    logging.info("="*70)
     
-    # --- Subplot 1: Todos los algoritmos (escala logarítmica) ---
-    logging.info("Generando subplot 1: Todos los algoritmos (escala log)...")
+    fig1, ax1 = plt.subplots(figsize=(12, 8))
     
     # Algoritmos exactos
     ax1.plot(n_values, brute_force_vals, 'r-', linewidth=2.5, label='Brute Force: $O(k^n \\cdot n)$', alpha=0.8)
@@ -157,13 +159,28 @@ def plot_complexity_orders():
     ax1.set_yscale('log')
     ax1.set_xlabel('Número de ítems (n)', fontsize=12, fontweight='bold')
     ax1.set_ylabel('Operaciones (escala logarítmica)', fontsize=12, fontweight='bold')
-    ax1.set_title(f'Comparación de Órdenes de Complejidad (k={K_FIXED})\nEscala Logarítmica', 
-                  fontsize=14, fontweight='bold')
-    ax1.legend(loc='upper left', fontsize=9, framealpha=0.9)
+    ax1.set_title(f'Comparación de Órdenes de Complejidad - Todos los Algoritmos\n(k={K_FIXED}, Escala Logarítmica)', 
+                  fontsize=14, fontweight='bold', pad=20)
+    ax1.legend(loc='upper left', fontsize=10, framealpha=0.9)
     ax1.grid(True, alpha=0.3, linestyle='--')
     
-    # --- Subplot 2: Solo algoritmos polinomiales/cuasi-lineales (escala lineal) ---
-    logging.info("Generando subplot 2: Algoritmos polinomiales (escala lineal)...")
+    plt.tight_layout()
+    
+    # Guardar gráfico 1
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    plt.savefig(OUTPUT_PNG_LOG, dpi=300, bbox_inches='tight')
+    logging.info(f"✓ Gráfico guardado: {OUTPUT_PNG_LOG}")
+    plt.close(fig1)
+    logging.info("")
+    
+    # --- GRÁFICO 2: Solo algoritmos polinomiales/cuasi-lineales (escala lineal) ---
+    logging.info("="*70)
+    logging.info("GRÁFICO 2: ALGORITMOS POLINOMIALES (ESCALA LINEAL)")
+    logging.info("="*70)
+    
+    fig2, ax2 = plt.subplots(figsize=(12, 8))
+    
+    fig2, ax2 = plt.subplots(figsize=(12, 8))
     
     # Solo greedy y metaheurísticas
     ax2.plot(n_values, greedy_nk_vals, 'blue', linewidth=2.5, label='FFD/BFD: $O(n \\log n + n \\cdot k)$', alpha=0.8)
@@ -176,9 +193,9 @@ def plot_complexity_orders():
     
     ax2.set_xlabel('Número de ítems (n)', fontsize=12, fontweight='bold')
     ax2.set_ylabel('Operaciones', fontsize=12, fontweight='bold')
-    ax2.set_title(f'Algoritmos Polinomiales y Metaheurísticas (k={K_FIXED})\nEscala Lineal', 
-                  fontsize=14, fontweight='bold')
-    ax2.legend(loc='upper left', fontsize=10, framealpha=0.9)
+    ax2.set_title(f'Algoritmos Polinomiales y Metaheurísticas\n(k={K_FIXED}, Escala Lineal)', 
+                  fontsize=14, fontweight='bold', pad=20)
+    ax2.legend(loc='upper left', fontsize=11, framealpha=0.9)
     ax2.grid(True, alpha=0.3, linestyle='--')
     
     # Formatear eje Y con separadores de miles
@@ -186,29 +203,35 @@ def plot_complexity_orders():
     
     plt.tight_layout()
     
-    # Guardar
+    # Guardar gráfico 2
+    plt.savefig(OUTPUT_PNG_LINEAR, dpi=300, bbox_inches='tight')
+    logging.info(f"✓ Gráfico guardado: {OUTPUT_PNG_LINEAR}")
+    plt.close(fig2)
     logging.info("")
-    logging.info("Guardando gráfico...")
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    plt.savefig(OUTPUT_PNG, dpi=300, bbox_inches='tight')
-    logging.info(f"✓ Gráfico guardado: {OUTPUT_PNG}")
+    plt.close(fig2)
+    logging.info("")
     
-    # Mostrar
-    logging.info("")
+    # Mostrar resumen
     logging.info("="*70)
-    logging.info("GRÁFICO GENERADO EXITOSAMENTE")
+    logging.info("GRÁFICOS GENERADOS EXITOSAMENTE")
     logging.info("="*70)
-    logging.info(f"📊 Archivo: {OUTPUT_PNG}")
+    logging.info(f"📊 Gráfico 1 (Escala Log): {OUTPUT_PNG_LOG}")
+    logging.info(f"📊 Gráfico 2 (Escala Lineal): {OUTPUT_PNG_LINEAR}")
     logging.info("")
     logging.info("Interpretación:")
-    logging.info("  • Subplot 1 (izquierda): Muestra todos los algoritmos en escala logarítmica")
-    logging.info("    - Algoritmos exponenciales crecen dramáticamente")
-    logging.info("    - Algoritmos polinomiales son líneas casi planas en comparación")
     logging.info("")
-    logging.info("  • Subplot 2 (derecha): Enfoque en algoritmos prácticos (escala lineal)")
-    logging.info("    - KK y greedy cuasi-lineales: crecimiento muy lento")
-    logging.info("    - LDF cuadrático: crece más rápido pero aún manejable")
-    logging.info("    - Metaheurísticas: lineales con parámetros fijos")
+    logging.info("  📈 GRÁFICO 1 - Escala Logarítmica:")
+    logging.info("    • Muestra todos los algoritmos en escala logarítmica")
+    logging.info("    • Algoritmos exponenciales (rojo, morado) crecen dramáticamente")
+    logging.info("    • Algoritmos polinomiales (azul, verde) son líneas casi planas en comparación")
+    logging.info("    • Útil para ver el contraste entre clases de complejidad")
+    logging.info("")
+    logging.info("  📉 GRÁFICO 2 - Escala Lineal:")
+    logging.info("    • Enfoque en algoritmos prácticos (polinomiales y metaheurísticas)")
+    logging.info("    • KK y greedy cuasi-lineales: crecimiento muy lento")
+    logging.info("    • LDF cuadrático: crece más rápido pero aún manejable")
+    logging.info("    • Metaheurísticas: lineales con parámetros fijos")
+    logging.info("    • Útil para comparar algoritmos en problemas reales")
     logging.info("")
     logging.info("💡 Conclusión: Los algoritmos exponenciales son inviables para n > 20,")
     logging.info("   mientras que greedy y metaheurísticas escalan bien a problemas grandes.")

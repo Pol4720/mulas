@@ -442,13 +442,12 @@ Tabu Search & $O(I \cdot N)$ & $O(n + T)$ \\
 \frametitle{Comparación de Tiempos}
 
 \centering
-\textbf{[GRÁFICO 1: Tiempo vs tamaño (escala log)]}
+\includegraphics[width=0.95\textwidth]{images/runtime_vs_size_k3.png}
 
-\vspace{2cm}
 \small
-Instancias aleatorias con $n \in [5, 50]$ e $k=3,4,5$
+Instancias aleatorias con $n \in [5, 50]$ e $k=3$
 
-Eje Y: tiempo (segundos)
+Eje Y: tiempo (segundos, escala logarítmica)
 
 Eje X: número de ítems
 
@@ -458,17 +457,16 @@ Eje X: número de ítems
 \frametitle{Órdenes de Complejidad}
 
 \centering
-\textbf{[GRÁFICO 2: Comparación de órdenes]}
+\includegraphics[width=0.95\textwidth,height= 0.80\textheight]{images/complexity_orders_logarithmic.png}
 
-\vspace{2cm}
-\small
-- FFD/LPT: línea plana (polinomial)
+\scriptsize
+Comparación teórica de órdenes de complejidad con $k=3$ contenedores
 
-- B\&B: exponencial débil
+% - Rojo/Morado: Algoritmos exponenciales (Fuerza Bruta, B\&B, DP)
 
-- DP: exponencial fuerte $3^n$
+% - Azul/Verde: Algoritmos polinomiales (Greedy, KK)
 
-- Metaheurísticas: línea plana (parámetro fijo)
+% - Naranja/Rosa: Metaheurísticas (lineales con parámetro fijo)
 
 \end{frame}
 
@@ -480,18 +478,13 @@ Eje X: número de ítems
 \text{Gap}(\%) = \frac{\text{Heurístico} - \text{Óptimo}}{\text{Óptimo}} \times 100
 \]
 
-\vspace{0.5cm}
-\textbf{Resultados promedio:}
-\begin{itemize}
-    \item FFD: 5-15\%
-    \item LPT: 3-10\%
-    \item Genéticos: 0.5-3\%
-    \item Tabú: 0.2-1.5\%
-\end{itemize}
-
-\vspace{0.5cm}
+\vspace{0.3cm}
 \centering
-\textbf{[GRÁFICO 3: Gap vs tamaño de instancia]}
+\includegraphics[width=0.85\textwidth]{images/gap_by_algorithm.png}
+
+\vspace{0.2cm}
+\small
+\textbf{Resultado:} Metaheurísticas (SA, GA, Tabú) presentan los gaps más bajos
 
 \end{frame}
 

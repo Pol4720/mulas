@@ -23,6 +23,13 @@ try:
         LPTApproximation,
         MultiWayPartition
     )
+    from .hybrid import (
+        HybridDPMeta,
+        HybridQualityFocused,
+        HybridSpeedFocused,
+        HybridWithGenetic,
+        HybridWithTabu
+    )
 except ImportError:
     from discrete_logistics.algorithms.base import Algorithm, AlgorithmRegistry
     from discrete_logistics.algorithms.greedy import (
@@ -44,6 +51,13 @@ except ImportError:
         LPTApproximation,
         MultiWayPartition
     )
+    from discrete_logistics.algorithms.hybrid import (
+        HybridDPMeta,
+        HybridQualityFocused,
+        HybridSpeedFocused,
+        HybridWithGenetic,
+        HybridWithTabu
+    )
 
 __all__ = [
     "Algorithm",
@@ -62,4 +76,9 @@ __all__ = [
     "TabuSearch",
     "LPTApproximation",
     "MultiWayPartition",
+    "HybridDPMeta",
+    "HybridQualityFocused",
+    "HybridSpeedFocused",
+    "HybridWithGenetic",
+    "HybridWithTabu",
 ]

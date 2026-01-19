@@ -30,6 +30,10 @@ try:
         HybridWithGenetic,
         HybridWithTabu
     )
+    from .external_adapters import (
+        GeminiHGADP,
+        QwenSADP
+    )
 except ImportError:
     from discrete_logistics.algorithms.base import Algorithm, AlgorithmRegistry
     from discrete_logistics.algorithms.greedy import (
@@ -58,6 +62,10 @@ except ImportError:
         HybridWithGenetic,
         HybridWithTabu
     )
+    from discrete_logistics.algorithms.external_adapters import (
+        GeminiHGADP,
+        QwenSADP
+    )
 
 __all__ = [
     "Algorithm",
@@ -81,4 +89,6 @@ __all__ = [
     "HybridSpeedFocused",
     "HybridWithGenetic",
     "HybridWithTabu",
+    "GeminiHGADP",
+    "QwenSADP",
 ]

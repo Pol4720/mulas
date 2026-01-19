@@ -615,11 +615,11 @@ class ExperimentRunner:
                 instance_config=config,
                 objective_value=solution.value_difference,
                 execution_time=execution_time,
-                is_feasible=solution.is_feasible,
+                is_feasible=solution.is_valid,
                 iteration_count=solution.iterations or 0,
                 additional_metrics={
-                    'max_load': solution.max_load,
-                    'min_load': solution.min_load,
+                    'max_value': solution.max_value,
+                    'min_value': solution.min_value,
                     'metadata': solution.metadata
                 }
             )

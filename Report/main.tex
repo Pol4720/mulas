@@ -252,31 +252,83 @@ Total: $O(n + k)$, por lo tanto el certificado es verificable en tiempo polinomi
 
 \end{proof}
 
-\subsection{Cadena de Reducciones: De PARTITION a Nuestro Problema}
+\subsection{Cadena de Reducciones: Demostración de NP-Completitud Fuerte}
 
-Para comprender mejor la dureza del problema, presentamos la cadena de reducciones desde problemas fundamentales:
+Para comprender mejor la dureza del problema, presentamos la cadena de reducciones que establece tanto la NP-completitud de 3-PARTITION como la de nuestro problema:
 
 \begin{center}
 \textbf{Cadena de Reducciones Polinomiales:}
 
 \vspace{0.5cm}
 
-PARTITION $\leq_p$ 3-PARTITION $\leq_p$ BALANCED-BIN-PACKING
+3-SAT $\leq_p$ 3DM $\leq_p$ 4-PARTITION $\leq_p$ 3-PARTITION $\leq_p$ BALANCED-BIN-PACKING
 
 \vspace{0.5cm}
 
 
 \end{center}
 
-\subsubsection{Problema PARTITION (Punto de Partida)}
+A continuación presentamos cada problema de la cadena y las ideas principales de las reducciones.
 
-\begin{definition}[PARTITION]
-\textbf{Entrada:} Conjunto $S = \{a_1, a_2, \ldots, a_n\}$ de enteros positivos.
+\subsubsection{Problema 3-SAT (Punto de Partida)}
 
-\textbf{Pregunta:} ¿Existe un subconjunto $S' \subseteq S$ tal que $\sum_{a_i \in S'} a_i = \sum_{a_i \in S \setminus S'} a_i = \frac{1}{2}\sum_{a_i \in S} a_i$?
+El problema 3-SAT es uno de los problemas fundamentales en teoría de complejidad, siendo el primer problema demostrado NP-completo mediante el teorema de Cook-Levin (1971).
+
+\begin{definition}[3-SAT]
+\textbf{Entrada:} Una fórmula booleana $\phi$ en forma normal conjuntiva (CNF) donde cada cláusula contiene exactamente 3 literales. Es decir:
+\[
+\phi = (l_{1,1} \lor l_{1,2} \lor l_{1,3}) \land (l_{2,1} \lor l_{2,2} \lor l_{2,3}) \land \cdots \land (l_{m,1} \lor l_{m,2} \lor l_{m,3})
+\]
+donde cada $l_{i,j}$ es una variable $x_k$ o su negación $\neg x_k$.
+
+\textbf{Pregunta:} ¿Existe una asignación de valores de verdad a las variables $x_1, \ldots, x_n$ que satisfaga $\phi$ (haga $\phi$ verdadera)?
 \end{definition}
 
-PARTITION es uno de los 21 problemas originales de Karp (1972) demostrados NP-completos.
+\textbf{Ejemplo:} La fórmula $\phi = (x_1 \lor \neg x_2 \lor x_3) \land (\neg x_1 \lor x_2 \lor x_3)$ es satisfacible con la asignación $x_1 = \text{True}, x_2 = \text{True}, x_3 = \text{True}$.
+
+\begin{theorem}[Cook-Levin, 1971]
+3-SAT es NP-completo.
+\end{theorem}
+
+\subsubsection{Problema 3-Dimensional Matching (3DM)}
+
+El problema 3DM generaliza el concepto de emparejamiento de grafos bipartitos a hipergrafos tripartitos.
+
+\begin{definition}[3-Dimensional Matching (3DM)]
+\textbf{Entrada:} Tres conjuntos disjuntos $X$, $Y$, $Z$, cada uno de cardinalidad $q$, y un conjunto $T \subseteq X \times Y \times Z$ de tripletas.
+
+\textbf{Pregunta:} ¿Existe un subconjunto $M \subseteq T$ de cardinalidad $q$ tal que cada elemento de $X \cup Y \cup Z$ aparece exactamente una vez en $M$? (Es decir, $M$ es un \textit{emparejamiento perfecto} 3-dimensional).
+\end{definition}
+
+\textbf{Ejemplo:} Sean $X = \{x_1, x_2\}$, $Y = \{y_1, y_2\}$, $Z = \{z_1, z_2\}$ y:
+\[
+T = \{(x_1, y_1, z_1), (x_2, y_2, z_2)\}
+\]
+Entonces $M = T$ es un emparejamiento perfecto: cada elemento de $X$, $Y$ y $Z$ aparece exactamente una vez. Si tuviéramos $T' = \{(x_1, y_1, z_1), (x_1, y_2, z_2)\}$, no existiría emparejamiento perfecto porque $x_2$ no aparece en ninguna tripleta.
+
+\begin{theorem}[Karp, 1972 \cite{karp1972reducibility}]
+3DM es NP-completo. Además, 3DM es fuertemente NP-completo (permanece NP-completo incluso cuando $|T|$ está acotado polinomialmente).
+\end{theorem}
+
+\subsubsection{Reducción de 3-SAT a 3DM (Idea Intuitiva)}
+
+La reducción de 3-SAT a 3DM utiliza una construcción ingeniosa con ``gadgets'' que codifican las variables y cláusulas de la fórmula booleana.
+
+\textbf{Idea general de la construcción \cite{karp1972reducibility, garey1979computers}:}
+
+\begin{enumerate}
+    \item \textbf{Gadget de variable (rueda):} Para cada variable $x_i$ que aparece $k_i$ veces en la fórmula, construimos una ``rueda'' de $2k_i$ tripletas solapadas. La rueda tiene exactamente dos formas de ser cubierta completamente:
+    \begin{itemize}
+        \item Seleccionar todas las tripletas de índice par (corresponde a $x_i = \text{True}$)
+        \item Seleccionar todas las tripletas de índice impar (corresponde a $x_i = \text{False}$)
+    \end{itemize}
+    
+    \item \textbf{Gadget de cláusula (rosa):} Para cada cláusula $C_j = (l_1 \lor l_2 \lor l_3)$, construimos una ``rosa'' de 3 tripletas solapadas, una por cada literal. La rosa puede cubrirse si y solo si al menos uno de sus vértices queda libre por el gadget de variable correspondiente.
+    
+    \item \textbf{Gadget de recolección de basura:} Como es posible que más de un literal de una cláusula sea verdadero (dejando vértices extra sin cubrir), añadimos tripletas adicionales que ``recogen'' estos vértices sobrantes.
+\end{enumerate}
+
+\textbf{Intuición:} La estructura de la rueda fuerza una elección binaria (True/False) para cada variable. La rosa de cada cláusula solo puede completarse si al menos un literal es verdadero (dejando un vértice disponible en el gadget de variable). Así, existe un emparejamiento 3D perfecto si y solo si existe una asignación satisfactoria.
 
 \subsubsection{Problema 3-PARTITION}
 
@@ -290,64 +342,144 @@ PARTITION es uno de los 21 problemas originales de Karp (1972) demostrados NP-co
 \textbf{Pregunta:} ¿Se puede particionar $A$ en $m$ conjuntos disjuntos $A_1, \ldots, A_m$ tal que cada $A_i$ contiene exactamente 3 elementos y $\sum_{a \in A_i} a = B$?
 \end{definition}
 
-\textbf{Importancia:} 3-PARTITION es \textit{fuertemente NP-completo}, lo que significa que permanece NP-completo incluso si los números se representan en unario (Garey \& Johnson, 1979).
 
-\subsubsection{Reducción 1: PARTITION $\leq_p$ 3-PARTITION}
+\subsubsection{Reducción de 3DM a 4-PARTITION (Idea Intuitiva)}
 
-\begin{lemma}[Reducción desde PARTITION]
-PARTITION se reduce polinomialmente a 3-PARTITION.
+La reducción de 3DM a 4-PARTITION codifica las tripletas del emparejamiento como números, utilizando una representación posicional que fuerza la estructura deseada \cite{garey1979computers}.
+
+\textbf{Idea general de la construcción:}
+
+Dada una instancia de 3DM con conjuntos $X = \{x_1, \ldots, x_q\}$, $Y = \{y_1, \ldots, y_q\}$, $Z = \{z_1, \ldots, z_q\}$ y tripletas $T = \{t_1, \ldots, t_m\}$:
+
+\begin{enumerate}
+    \item \textbf{Codificación numérica:} Elegimos una base $r = 32q$ suficientemente grande. Para cada tripleta $t = (x_i, y_j, z_k) \in T$, creamos un número:
+    \[
+    n_t = 10r^4 - kr^3 - jr^2 - ir
+    \]
+    Los coeficientes negativos codifican los índices de los elementos en la tripleta.
+    
+    \item \textbf{Elementos de complemento:} Para cada elemento $x_i \in X$ (y análogamente para $Y$ y $Z$), creamos números que ``compensan'' su aparición:
+    \begin{itemize}
+        \item Un elemento ``real'' $x_i^{[1]}$ que se usará en la solución
+        \item Elementos ``dummy'' $x_i^{[2]}, x_i^{[3]}, \ldots$ para las apariciones extra
+    \end{itemize}
+    Los tamaños se diseñan para que la suma de una tripleta más sus tres elementos reales sea exactamente el objetivo $T$.
+    
+    \item \textbf{Objetivo:} $T = 40r^4$ (cada cuaterna debe sumar este valor).
+\end{enumerate}
+
+\textbf{Por qué funciona:} 
+\begin{itemize}
+    \item La base grande $r$ hace que los ``dígitos'' (coeficientes de $r^4, r^3, r^2, r$) no se mezclen al sumar.
+    \item Para obtener exactamente $40r^4$, las contribuciones de cada posición deben ``cancelarse'' correctamente.
+    \item Esto solo ocurre cuando seleccionamos tripletas que cubren cada elemento exactamente una vez.
+\end{itemize}
+
+\subsubsection{Cadena de Reducciones para 3-PARTITION (Garey \& Johnson)}
+
+La demostración original de la NP-completitud fuerte de 3-PARTITION fue establecida por Garey y Johnson \cite{garey1975complexity, garey1979computers} mediante la siguiente cadena de reducciones:
+
+\begin{center}
+\textbf{3-SAT} $\leq_p$ \textbf{3-Dimensional Matching (3DM)} $\leq_p$ \textbf{4-PARTITION} $\leq_p$ \textbf{3-PARTITION}
+\end{center}
+
+Presentamos aquí la reducción clave de 4-PARTITION a 3-PARTITION, que es la más relevante para nuestro problema.
+
+\begin{definition}[4-PARTITION]
+\textbf{Entrada:} Conjunto $A = \{a_1, \ldots, a_{4m}\}$ de $4m$ enteros positivos con $\frac{T}{5} < a_i < \frac{T}{3}$ y $\sum_{i=1}^{4m} a_i = mT$.
+
+\textbf{Pregunta:} ¿Se puede particionar $A$ en $m$ conjuntos de exactamente 4 elementos cada uno, donde cada conjunto suma $T$?
+\end{definition}
+
+\begin{lemma}[Reducción de 4-PARTITION a 3-PARTITION \cite{garey1979computers}]
+4-PARTITION $\leq_p$ 3-PARTITION.
 \end{lemma}
 
 \begin{proof}
-Dada una instancia de PARTITION con conjunto $S = \{a_1, \ldots, a_n\}$ donde $\sum_{i=1}^n a_i = 2T$, construimos una instancia de 3-PARTITION:
+Dada una instancia de 4-PARTITION con $4m$ enteros $a_1, \ldots, a_{4m}$ (cada uno en el rango $(\frac{T}{5}, \frac{T}{3})$) con suma total $mT$, construimos una instancia de 3-PARTITION:
 
 \textbf{Construcción:}
 
-Sea $M = 4T + 1$ un valor suficientemente grande. Construimos $3n$ elementos:
-\begin{itemize}
-    \item Para cada $a_i \in S$, creamos tres elementos: $b_{i,1} = M + a_i$, $b_{i,2} = 2M$, $b_{i,3} = 2M - a_i$
-\end{itemize}
+\begin{enumerate}
+    \item \textbf{Elementos regulares:} Para cada $a_i$ en la instancia de 4-PARTITION, creamos un elemento regular:
+    \[w_i = 4(5T + a_i) + 1\]
+    Hay $4m$ elementos regulares con suma total $81mT + 4m$.
 
-Definimos:
-\begin{itemize}
-    \item Número de grupos: $m = n$
-    \item Objetivo por grupo: $B = 5M$
-\end{itemize}
+    \item \textbf{Elementos de emparejamiento:} Para cada par ordenado $(i, j)$ con $i \neq j$, creamos dos elementos de emparejamiento:
+    \[u_{ij} = 4(6T - a_i - a_j) + 2\]
+    \[u'_{ij} = 4(5T + a_i + a_j) + 2\]
+    Hay $4m(4m-1)$ elementos de emparejamiento con suma total $(88mT + 16m)(4m-1)$.
 
-\textbf{Verificación de restricciones de 3-PARTITION:}
-\begin{itemize}
-    \item Suma total: $\sum_{i=1}^n (b_{i,1} + b_{i,2} + b_{i,3}) = \sum_{i=1}^n ((M+a_i) + 2M + (2M-a_i)) = 5Mn = mB$ \checkmark
-    \item Cada elemento satisface $\frac{B}{4} < b_{i,j} < \frac{B}{2}$:
-    \begin{itemize}
-        \item $\frac{5M}{4} < M + a_i < \frac{5M}{2}$ se cumple porque $a_i < T < M$ y $M > 0$
-        \item $\frac{5M}{4} < 2M < \frac{5M}{2}$ se cumple claramente
-        \item $\frac{5M}{4} < 2M - a_i < \frac{5M}{2}$ se cumple porque $a_i < T < M$
-    \end{itemize}
-\end{itemize}
+    \item \textbf{Elementos de relleno:} Añadimos $8m^2 - 3m$ elementos de relleno, cada uno de tamaño $20T$.
+    
+    \item \textbf{Total:} $24m^2 - 3m = 3(8m^2 - m)$ elementos con suma $(64T + 4)(8m^2 - m)$.
+    
+    \item \textbf{Objetivo:} $B = 64T + 4$ (cada tripleta debe sumar este valor).
+\end{enumerate}
+
+\textbf{Verificación de restricciones:} Todos los elementos están en el rango $(16T + 1, 32T + 2) \subset (\frac{B}{4}, \frac{B}{2})$.
 
 \textbf{Correctitud ($\Rightarrow$):}
 
-Si existe una partición $S', S \setminus S'$ de PARTITION con $\sum_{a_i \in S'} a_i = T$:
+Si existe una 4-partición válida $\{S_1, \ldots, S_m\}$ donde cada $S_k = \{a_{k_1}, a_{k_2}, a_{k_3}, a_{k_4}\}$ suma $T$:
 
-Para cada $i$, agrupamos $\{b_{i,1}, b_{i,2}, b_{i,3}\}$ en un conjunto $A_i$. Cada grupo suma exactamente $(M+a_i) + 2M + (2M-a_i) = 5M = B$. Esta es una 3-partición válida.
+Para cada 4-conjunto con suma $T$, construimos dos tripletas en la 3-partición:
+\begin{itemize}
+    \item $\{w_{k_1}, w_{k_2}, u_{k_1 k_2}\}$ con suma $4(5T + a_{k_1} + 5T + a_{k_2} + 6T - a_{k_1} - a_{k_2}) + 4 = 64T + 4 = B$
+    \item $\{w_{k_3}, w_{k_4}, u'_{k_1 k_2}\}$ con suma $4(5T + a_{k_3} + 5T + a_{k_4} + 5T + a_{k_1} + a_{k_2}) + 4$
+    
+    Como $a_{k_1} + a_{k_2} + a_{k_3} + a_{k_4} = T$, esta suma es $64T + 4 = B$.
+\end{itemize}
+
+Los elementos de emparejamiento restantes se agrupan en tripletas de la forma $\{u_{ij}, u'_{ij}, \text{relleno}\}$ con suma $4(6T - a_i - a_j + 5T + a_i + a_j + 5T) + 4 = 64T + 4 = B$.
 
 \textbf{Correctitud ($\Leftarrow$):}
 
-Si existe una 3-partición válida, observemos que:
-\begin{itemize}
-    \item Cada grupo debe sumar exactamente $B = 5M$
-    \item Por las restricciones de tamaño, cada grupo tiene exactamente 3 elementos
-    \item El único elemento de valor $2M$ en cada tripleta $(b_{i,1}, b_{i,2}, b_{i,3})$ es $b_{i,2}$
-    \item Para que un grupo sume $5M$, si contiene $b_{i,2} = 2M$, los otros dos elementos deben sumar $3M$
-    \item Los únicos pares que suman $3M$ son de la forma $(b_{i,1}, b_{i,3}) = (M+a_i, 2M-a_i)$ o $(b_{j,1}, b_{k,3})$ con $a_j + a_k = M$
-\end{itemize}
+Si existe una 3-partición válida:
 
-Dado que $M > 2T$ y cada $a_i \leq T$, no existen $a_j, a_k$ tales que $a_j + a_k = M$. Por tanto, cada grupo debe contener exactamente $\{b_{i,1}, b_{i,2}, b_{i,3}\}$ para algún $i$.
+\begin{enumerate}
+    \item Cada tripleta suma $B = 64T + 4$, que es divisible por 4 con residuo 0.
+    
+    \item Por los residuos módulo 4:
+    \begin{itemize}
+        \item Elementos regulares: residuo 1
+        \item Elementos de emparejamiento: residuo 2
+        \item Elementos de relleno: residuo 0
+    \end{itemize}
+    
+    \item Para obtener residuo 0 (mod 4), cada tripleta debe contener:
+    \begin{itemize}
+        \item Dos elementos regulares y un elemento de emparejamiento (residuo $1+1+2=4 \equiv 0$), o
+        \item Dos elementos de emparejamiento y un elemento de relleno (residuo $2+2+0=4 \equiv 0$)
+    \end{itemize}
+    
+    \item Si una tripleta contiene dos elementos de emparejamiento $u_{ij}$ y $u_{kl}$ con un relleno, la suma de los dos elementos de emparejamiento debe ser $44T + 4$. Por análisis algebraico, esto fuerza que sean un par ``emparejado'' de la forma $u_{ij}$ y $u'_{ij}$.
+    
+    \item Los elementos regulares restantes forman tripletas con elementos de emparejamiento. Por las restricciones de suma, cuatro elementos regulares $w_{k_1}, w_{k_2}, w_{k_3}, w_{k_4}$ que aparecen en dos tripletas con un par emparejado $u_{ij}, u'_{ij}$ deben satisfacer $a_{k_1} + a_{k_2} + a_{k_3} + a_{k_4} = T$.
+\end{enumerate}
 
-Esto implica que la 3-partición corresponde a una partición válida del conjunto original $S$. $\square$
+Por lo tanto, de una 3-partición válida podemos reconstruir una 4-partición válida. $\square$
 \end{proof}
 
-\subsubsection{Reducción 2: 3-PARTITION $\leq_p$ BALANCED-BIN-PACKING}
+\begin{theorem}[NP-Completitud Fuerte de 3-PARTITION]
+3-PARTITION es fuertemente NP-completo.
+\end{theorem}
+
+\begin{proof}
+La prueba completa sigue la cadena de reducciones de Garey y Johnson \cite{garey1979computers}:
+\begin{enumerate}
+    \item 3-SAT es NP-completo (Cook-Levin, 1971).
+    \item 3-Dimensional Matching (3DM) es fuertemente NP-completo por reducción desde 3-SAT usando gadgets de variables y cláusulas (Karp, 1972) \cite{karp1972reducibility}.
+    \item 4-PARTITION es fuertemente NP-completo por reducción desde 3DM usando una codificación numérica de las tripletas.
+    \item 3-PARTITION es fuertemente NP-completo por la reducción presentada arriba.
+\end{enumerate}
+
+En cada reducción, el tamaño de los números en la instancia construida está acotado polinomialmente por el tamaño de la entrada, preservando la NP-completitud fuerte. $\square$
+\end{proof}
+
+\subsubsection{Reducción de 3-PARTITION a BALANCED-BIN-PACKING}
+
+Con la NP-completitud fuerte de 3-PARTITION establecida por Garey y Johnson, ahora podemos demostrar que nuestro problema también es NP-completo.
 
 \begin{lemma}[Reducción desde 3-PARTITION]
 3-PARTITION se reduce polinomialmente a BALANCED-BIN-PACKING-DEC.
@@ -968,11 +1100,105 @@ D = O\left(\frac{\max_i v_i}{n^{\Theta(\log n)}}\right)
 donde $v_i$ es el valor del ítem $i$.
 \end{theorem}
 
+\subsubsection{Optimalidad de KK para Secuencias Supercrecientes}
+
+Si bien el algoritmo KK es una heurística para el caso general NP-Hard del problema de partición, existe un conjunto especial de instancias donde \textbf{garantiza optimalidad}: las \textit{secuencias supercrecientes}.
+
+\begin{definition}[Secuencia Supercreciente]
+Un conjunto de valores ordenados decrecientemente $v_1 \ge v_2 \ge \dots \ge v_n$ es \textbf{supercreciente} si cada elemento es mayor o igual a la suma de todos los elementos que le siguen:
+\[
+v_i \ge \sum_{j=i+1}^{n} v_j \quad \forall i \in \{1, \ldots, n-1\}
+\]
+\end{definition}
+
+\begin{remark}
+El ejemplo clásico de secuencias supercrecientes son las potencias de 2: $\{8, 4, 2, 1\}$, donde $8 \ge 4+2+1=7$, $4 \ge 2+1=3$, y $2 \ge 1$.
+\end{remark}
+
+\begin{theorem}[Optimalidad de KK para Secuencias Supercrecientes con $k=2$]
+Para el problema de 2-particionamiento ($k=2$) donde los valores de los ítems forman una secuencia supercreciente y las capacidades son no restrictivas ($C_1, C_2 \ge \sum_{i=1}^n w_i$), el algoritmo KK encuentra la partición óptima.
+\end{theorem}
+
+\begin{proof}[Demostración (Intuición)]
+Sea $v_1 \ge v_2 \ge \dots \ge v_n$ una secuencia supercreciente. El objetivo es minimizar $|\text{Suma}_A - \text{Suma}_B|$ donde $A$ y $B$ son los dos contenedores.
+
+\textbf{Paso 1: La decisión forzada.}
+El ítem más grande $v_1$ debe ir a algún contenedor, digamos $A$. Por la propiedad supercreciente:
+\[
+v_1 \ge v_2 + v_3 + \cdots + v_n
+\]
+Esto significa que incluso si colocamos \textit{todos} los demás ítems en $B$, la suma de $A$ siempre será mayor o igual: $v_1 \ge \sum_{j=2}^n v_j$.
+
+\textbf{Paso 2: Estrategia única de minimización.}
+Dado que $v_1$ domina, la diferencia siempre será positiva: $\text{Suma}_A - \text{Suma}_B \ge 0$. Para minimizar esta diferencia, necesitamos maximizar $\text{Suma}_B$. El máximo posible para $\text{Suma}_B$ es precisamente $v_2 + v_3 + \cdots + v_n$.
+
+Por lo tanto, la partición óptima es:
+\begin{itemize}
+    \item Contenedor $A$: $\{v_1\}$
+    \item Contenedor $B$: $\{v_2, v_3, \ldots, v_n\}$
+\end{itemize}
+
+Con diferencia óptima:
+\[
+\text{Gap}_{\text{óptimo}} = v_1 - (v_2 + v_3 + \cdots + v_n)
+\]
+
+\textbf{Paso 3: Comportamiento de KK.}
+El algoritmo KK procede como sigue:
+\begin{enumerate}
+    \item Toma $v_1$ y $v_2$, los reemplaza por $v_1 - v_2$
+    \item Por la propiedad supercreciente, $(v_1 - v_2) \ge v_3 + \cdots + v_n$
+    \item Toma $(v_1 - v_2)$ y $v_3$, los reemplaza por $(v_1 - v_2 - v_3)$
+    \item Este proceso continúa hasta obtener: $v_1 - (v_2 + v_3 + \cdots + v_n)$
+\end{enumerate}
+
+KK calcula exactamente la diferencia óptima deducida en el Paso 2. Por lo tanto, KK encuentra la partición óptima para secuencias supercrecientes. $\square$
+\end{proof}
+
+\begin{remark}[Ejemplo Ilustrativo]
+Considere la secuencia supercreciente $\{8, 4, 2, 1\}$.
+
+\textbf{Ejecución de KK:}
+\begin{enumerate}
+    \item Estado inicial: $\{8, 4, 2, 1\}$
+    \item Paso 1: Toma $8$ y $4$, calcula $8-4=4$. Estado: $\{4, 2, 1\}$
+    \item Paso 2: Toma $4$ y $2$, calcula $4-2=2$. Estado: $\{2, 1\}$
+    \item Paso 3: Toma $2$ y $1$, calcula $2-1=1$. Estado: $\{1\}$
+\end{enumerate}
+
+\textbf{Resultado:} Diferencia final = 1
+
+\textbf{Interpretación de la partición:}
+\begin{itemize}
+    \item Contenedor $A$: $\{8\}$ con suma = 8
+    \item Contenedor $B$: $\{4, 2, 1\}$ con suma = 7
+    \item Diferencia: $|8 - 7| = 1$ \textbf{(Óptimo Global)}
+\end{itemize}
+
+Esta es la única partición posible que minimiza la diferencia para esta instancia.
+\end{remark}
+
+\begin{corollary}[Condiciones de Optimalidad de KK]
+El algoritmo KK garantiza optimalidad en las siguientes condiciones:
+\begin{enumerate}
+    \item \textbf{Secuencias supercrecientes con $k=2$:} Como se demostró arriba
+    \item \textbf{Instancias muy pequeñas:} Para $k=2$ y $n \le 4$, el espacio de búsqueda es suficientemente pequeño que KK explora todas las opciones relevantes
+    \item \textbf{Partición perfecta trivial:} Cuando todos los valores son iguales ($v_i = c$) y $n$ es múltiplo par de $k$
+\end{enumerate}
+\end{corollary}
+
+\begin{remark}[Limitaciones para el Caso General]
+Para instancias generales (no supercrecientes) con $k=2$, existen contraejemplos donde KK no encuentra el óptimo. Por ejemplo, para $n=5$ con valores $\{6, 5, 4, 3, 2\}$, existe una partición perfecta $\{6,4\}$ y $\{5,3,2\}$ (ambas suman 10), pero KK puede no encontrarla dependiendo del orden de procesamiento.
+
+Para $k > 2$, la implementación se reduce a un enfoque greedy sin garantías teóricas de optimalidad.
+\end{remark}
+
 \textbf{Ventajas y desventajas:}
 \begin{itemize}
     \item \textbf{Ventajas:}
     \begin{itemize}
         \item Excelente para $k=2$ con garantía teórica
+        \item \textbf{Óptimo garantizado} para secuencias supercrecientes
         \item Muy eficiente: $O(n \log n)$
         \item No requiere parámetros de configuración
     \end{itemize}
@@ -981,6 +1207,7 @@ donde $v_i$ es el valor del ítem $i$.
         \item Para $k > 2$, se reduce a enfoque greedy sin garantías
         \item Puede tener dificultades con restricciones de capacidad muy ajustadas
         \item La reconstrucción de la solución puede violar capacidades
+        \item No garantiza optimalidad para instancias generales (no supercrecientes)
     \end{itemize}
 \end{itemize}
 
@@ -1710,6 +1937,28 @@ Posibles extensiones del trabajo incluyen:
 Garey, M.R., \& Johnson, D.S. (1979).
 \textit{Computers and Intractability: A Guide to the Theory of NP-Completeness}.
 W.H. Freeman.
+
+\bibitem{garey1979computers}
+Garey, M.R., \& Johnson, D.S. (1979).
+\textit{Computers and Intractability: A Guide to the Theory of NP-Completeness}.
+W.H. Freeman. pp. 96-105 and 224.
+
+\bibitem{garey1975complexity}
+Garey, M.R., \& Johnson, D.S. (1975).
+Complexity Results for Multiprocessor Scheduling under Resource Constraints.
+\textit{SIAM Journal on Computing}, 4(4), 397-411.
+doi:10.1137/0204035
+
+\bibitem{karp1972reducibility}
+Karp, R.M. (1972).
+Reducibility among combinatorial problems.
+In Miller, R.E., \& Thatcher, J.W. (Eds.), \textit{Complexity of Computer Computations} (pp. 85-103). Plenum.
+
+\bibitem{garey1978strong}
+Garey, M.R., \& Johnson, D.S. (1978).
+``Strong'' NP-Completeness Results: Motivation, Examples, and Implications.
+\textit{Journal of the ACM}, 25(3), 499-508.
+doi:10.1145/322077.322090
 
 \bibitem{martello1990}
 Martello, S., \& Toth, P. (1990).

@@ -63,10 +63,10 @@ class GeminiHGADP(Algorithm):
             ))
         
         gemini_bins = []
-        for bin_obj in problem.bins:
+        for i, capacity in enumerate(problem.bin_capacities):
             gemini_bins.append(_GeminiBin(
-                id=bin_obj.id,
-                capacity=int(bin_obj.capacity)
+                id=i,
+                capacity=int(capacity)
             ))
         
         # Ejecutar algoritmo H-GADP
@@ -82,14 +82,12 @@ class GeminiHGADP(Algorithm):
             # Crear bin con los items asignados
             new_bin = Bin(
                 id=g_bin.id,
-                capacity=problem.bins[i].capacity
+                capacity=problem.bin_capacities[i]
             )
             for g_item in g_bin.items:
-                # Encontrar item original
+                # Encontrar item original y agregarlo usando add_item
                 original_item = next(it for it in problem.items if it.id == g_item.id)
-                new_bin.items.append(original_item)
-                new_bin.current_weight += original_item.weight
-                new_bin.current_value += original_item.value
+                new_bin.items.append(original_item)  # Direct append since we control the assignment
             solution_bins.append(new_bin)
         
         execution_time = time.time() - start_time
@@ -323,21 +321,19 @@ class QwenSADP(Algorithm):
         # Convertir estructuras
         items = [_QwenItem(id=it.id, weight=float(it.weight), value=float(it.value)) 
                  for it in problem.items]
-        bins = [_QwenBin(id=b.id, capacity=float(b.capacity)) 
-                for b in problem.bins]
+        bins = [_QwenBin(id=i, capacity=float(cap)) 
+                for i, cap in enumerate(problem.bin_capacities)]
         
         # Ejecutar algoritmo
         assignment = self._hybrid_sa_dp(items, bins)
         
         # Construir solución
         solution_bins = []
-        for i, bin_obj in enumerate(problem.bins):
-            new_bin = Bin(id=bin_obj.id, capacity=bin_obj.capacity)
+        for i, capacity in enumerate(problem.bin_capacities):
+            new_bin = Bin(id=i, capacity=capacity)
             for item in problem.items:
-                if assignment.get(item.id) == bin_obj.id:
-                    new_bin.items.append(item)
-                    new_bin.current_weight += item.weight
-                    new_bin.current_value += item.value
+                if assignment.get(item.id) == i:
+                    new_bin.items.append(item)  # Direct append
             solution_bins.append(new_bin)
         
         execution_time = time.time() - start_time

@@ -1100,11 +1100,105 @@ D = O\left(\frac{\max_i v_i}{n^{\Theta(\log n)}}\right)
 donde $v_i$ es el valor del ítem $i$.
 \end{theorem}
 
+\subsubsection{Optimalidad de KK para Secuencias Supercrecientes}
+
+Si bien el algoritmo KK es una heurística para el caso general NP-Hard del problema de partición, existe un conjunto especial de instancias donde \textbf{garantiza optimalidad}: las \textit{secuencias supercrecientes}.
+
+\begin{definition}[Secuencia Supercreciente]
+Un conjunto de valores ordenados decrecientemente $v_1 \ge v_2 \ge \dots \ge v_n$ es \textbf{supercreciente} si cada elemento es mayor o igual a la suma de todos los elementos que le siguen:
+\[
+v_i \ge \sum_{j=i+1}^{n} v_j \quad \forall i \in \{1, \ldots, n-1\}
+\]
+\end{definition}
+
+\begin{remark}
+El ejemplo clásico de secuencias supercrecientes son las potencias de 2: $\{8, 4, 2, 1\}$, donde $8 \ge 4+2+1=7$, $4 \ge 2+1=3$, y $2 \ge 1$.
+\end{remark}
+
+\begin{theorem}[Optimalidad de KK para Secuencias Supercrecientes con $k=2$]
+Para el problema de 2-particionamiento ($k=2$) donde los valores de los ítems forman una secuencia supercreciente y las capacidades son no restrictivas ($C_1, C_2 \ge \sum_{i=1}^n w_i$), el algoritmo KK encuentra la partición óptima.
+\end{theorem}
+
+\begin{proof}[Demostración (Intuición)]
+Sea $v_1 \ge v_2 \ge \dots \ge v_n$ una secuencia supercreciente. El objetivo es minimizar $|\text{Suma}_A - \text{Suma}_B|$ donde $A$ y $B$ son los dos contenedores.
+
+\textbf{Paso 1: La decisión forzada.}
+El ítem más grande $v_1$ debe ir a algún contenedor, digamos $A$. Por la propiedad supercreciente:
+\[
+v_1 \ge v_2 + v_3 + \cdots + v_n
+\]
+Esto significa que incluso si colocamos \textit{todos} los demás ítems en $B$, la suma de $A$ siempre será mayor o igual: $v_1 \ge \sum_{j=2}^n v_j$.
+
+\textbf{Paso 2: Estrategia única de minimización.}
+Dado que $v_1$ domina, la diferencia siempre será positiva: $\text{Suma}_A - \text{Suma}_B \ge 0$. Para minimizar esta diferencia, necesitamos maximizar $\text{Suma}_B$. El máximo posible para $\text{Suma}_B$ es precisamente $v_2 + v_3 + \cdots + v_n$.
+
+Por lo tanto, la partición óptima es:
+\begin{itemize}
+    \item Contenedor $A$: $\{v_1\}$
+    \item Contenedor $B$: $\{v_2, v_3, \ldots, v_n\}$
+\end{itemize}
+
+Con diferencia óptima:
+\[
+\text{Gap}_{\text{óptimo}} = v_1 - (v_2 + v_3 + \cdots + v_n)
+\]
+
+\textbf{Paso 3: Comportamiento de KK.}
+El algoritmo KK procede como sigue:
+\begin{enumerate}
+    \item Toma $v_1$ y $v_2$, los reemplaza por $v_1 - v_2$
+    \item Por la propiedad supercreciente, $(v_1 - v_2) \ge v_3 + \cdots + v_n$
+    \item Toma $(v_1 - v_2)$ y $v_3$, los reemplaza por $(v_1 - v_2 - v_3)$
+    \item Este proceso continúa hasta obtener: $v_1 - (v_2 + v_3 + \cdots + v_n)$
+\end{enumerate}
+
+KK calcula exactamente la diferencia óptima deducida en el Paso 2. Por lo tanto, KK encuentra la partición óptima para secuencias supercrecientes. $\square$
+\end{proof}
+
+\begin{remark}[Ejemplo Ilustrativo]
+Considere la secuencia supercreciente $\{8, 4, 2, 1\}$.
+
+\textbf{Ejecución de KK:}
+\begin{enumerate}
+    \item Estado inicial: $\{8, 4, 2, 1\}$
+    \item Paso 1: Toma $8$ y $4$, calcula $8-4=4$. Estado: $\{4, 2, 1\}$
+    \item Paso 2: Toma $4$ y $2$, calcula $4-2=2$. Estado: $\{2, 1\}$
+    \item Paso 3: Toma $2$ y $1$, calcula $2-1=1$. Estado: $\{1\}$
+\end{enumerate}
+
+\textbf{Resultado:} Diferencia final = 1
+
+\textbf{Interpretación de la partición:}
+\begin{itemize}
+    \item Contenedor $A$: $\{8\}$ con suma = 8
+    \item Contenedor $B$: $\{4, 2, 1\}$ con suma = 7
+    \item Diferencia: $|8 - 7| = 1$ \textbf{(Óptimo Global)}
+\end{itemize}
+
+Esta es la única partición posible que minimiza la diferencia para esta instancia.
+\end{remark}
+
+\begin{corollary}[Condiciones de Optimalidad de KK]
+El algoritmo KK garantiza optimalidad en las siguientes condiciones:
+\begin{enumerate}
+    \item \textbf{Secuencias supercrecientes con $k=2$:} Como se demostró arriba
+    \item \textbf{Instancias muy pequeñas:} Para $k=2$ y $n \le 4$, el espacio de búsqueda es suficientemente pequeño que KK explora todas las opciones relevantes
+    \item \textbf{Partición perfecta trivial:} Cuando todos los valores son iguales ($v_i = c$) y $n$ es múltiplo par de $k$
+\end{enumerate}
+\end{corollary}
+
+\begin{remark}[Limitaciones para el Caso General]
+Para instancias generales (no supercrecientes) con $k=2$, existen contraejemplos donde KK no encuentra el óptimo. Por ejemplo, para $n=5$ con valores $\{6, 5, 4, 3, 2\}$, existe una partición perfecta $\{6,4\}$ y $\{5,3,2\}$ (ambas suman 10), pero KK puede no encontrarla dependiendo del orden de procesamiento.
+
+Para $k > 2$, la implementación se reduce a un enfoque greedy sin garantías teóricas de optimalidad.
+\end{remark}
+
 \textbf{Ventajas y desventajas:}
 \begin{itemize}
     \item \textbf{Ventajas:}
     \begin{itemize}
         \item Excelente para $k=2$ con garantía teórica
+        \item \textbf{Óptimo garantizado} para secuencias supercrecientes
         \item Muy eficiente: $O(n \log n)$
         \item No requiere parámetros de configuración
     \end{itemize}
@@ -1113,6 +1207,7 @@ donde $v_i$ es el valor del ítem $i$.
         \item Para $k > 2$, se reduce a enfoque greedy sin garantías
         \item Puede tener dificultades con restricciones de capacidad muy ajustadas
         \item La reconstrucción de la solución puede violar capacidades
+        \item No garantiza optimalidad para instancias generales (no supercrecientes)
     \end{itemize}
 \end{itemize}
 

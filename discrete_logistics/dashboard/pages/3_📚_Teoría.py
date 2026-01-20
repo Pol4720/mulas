@@ -142,20 +142,58 @@ with tabs[2]:
     st.markdown("""
     ## Cadena de Reducciones
     
-    ### De PARTITION a Nuestro Problema
+    ### Cadena Correcta para NP-Completitud Fuerte
+    
+    **Nota importante:** No es posible reducir desde PARTITION a 3-PARTITION para demostrar 
+    NP-completitud fuerte, ya que PARTITION es *débilmente* NP-completo (admite algoritmo 
+    pseudo-polinomial), mientras que 3-PARTITION es *fuertemente* NP-completo.
+    
+    La cadena correcta, establecida por Garey & Johnson, es:
     """)
     
     st.code("""
-    PARTITION (Karp 1972, NP-completo)
-         ↓ reducción polinomial
+    3-SAT (Karp, 1972 - NP-completo)
+         ↓ reducción polinomial (Karp, 1972)
+    3DM - 3-Dimensional Matching (Fuertemente NP-completo)
+         ↓ reducción polinomial (Garey & Johnson, 1975)
+    4-PARTITION (Fuertemente NP-completo)
+         ↓ reducción polinomial (Garey & Johnson, 1979)
     3-PARTITION (Fuertemente NP-completo)
          ↓ reducción polinomial
-    BIN PACKING CLÁSICO
-         ↓ generalización
     BALANCED-BIN-PACKING ← Nuestro problema
     """, language="text")
     
     st.markdown("""
+    ### Referencias Originales de las Reducciones
+    
+    | Reducción | Autores | Año | Publicación |
+    |-----------|---------|-----|-------------|
+    | 3-SAT → 3DM | R. Karp | 1972 | *Reducibility Among Combinatorial Problems* |
+    | 3DM → 4-PARTITION | Garey & Johnson | 1975 | *SIAM J. Computing* |
+    | 4-PARTITION → 3-PARTITION | Garey & Johnson | 1979 | *Computers and Intractability*, pp. 96-105 |
+    
+    ### Problema 3-SAT (Punto de Partida)
+    
+    **Entrada:** Fórmula booleana φ en forma normal conjuntiva con exactamente 3 literales por cláusula.
+    
+    **Pregunta:** ¿Existe una asignación de verdad que satisfaga todas las cláusulas?
+    
+    **Importancia:** 3-SAT es el problema NP-completo canónico, punto de partida para la mayoría de reducciones.
+    
+    ### Problema 3DM (3-Dimensional Matching)
+    
+    **Entrada:** Tres conjuntos disjuntos X, Y, Z de cardinalidad q, y un conjunto T ⊆ X × Y × Z de tripletas.
+    
+    **Pregunta:** ¿Existe un subconjunto M ⊆ T de cardinalidad q tal que cada elemento aparece exactamente una vez?
+    
+    **Importancia:** Es fuertemente NP-completo y sirve como puente hacia problemas numéricos.
+    
+    ### Problema 4-PARTITION
+    
+    **Entrada:** Conjunto A = {a₁, ..., a₄ₘ} de 4m enteros y objetivo B tal que Σaᵢ = mB.
+    
+    **Pregunta:** ¿Se puede particionar A en m subconjuntos de 4 elementos, cada uno sumando B?
+    
     ### Problema 3-PARTITION
     
     **Entrada:** 

@@ -159,23 +159,89 @@ Total: $O(n + k)$, por lo tanto el certificado es verificable en tiempo polinomi
 \frametitle{Cadena de Reducciones}
 
 \centering
-\Large
-\vspace{1cm}
-PARTITION $\leq_p$ 3-PARTITION $\leq_p$ BALANCED-BIN-PACKING
-
-\vspace{1cm}
 \normalsize
-\textbf{Implicación:} El problema es \textbf{NP-Hard}
+\vspace{0.3cm}
+
+\textbf{Cadena clásica para NP-completitud fuerte:}
+
+\vspace{0.3cm}
+\Large
+3-SAT $\leq_p$ 3DM $\leq_p$ 4-PARTITION $\leq_p$ 3-PARTITION $\leq_p$ BALANCED-BIN-PACKING
 
 \vspace{0.5cm}
+\normalsize
+\textbf{Fuentes originales de las reducciones:}
+\begin{itemize}
+    \item \textbf{3-SAT $\to$ 3DM:} Karp (1972) --- \textit{Reducibility Among Combinatorial Problems}
+    \item \textbf{3DM $\to$ 4-PARTITION $\to$ 3-PARTITION:} Garey \& Johnson (1975, 1979)
+\end{itemize}
 
-\textbf{Resultado:} El problema es NP-Completo
+\vspace{0.3cm}
+\textbf{Implicación:} El problema es \textbf{fuertemente NP-Hard}
+
+\vspace{0.2cm}
+\small
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Reducción: 3-PARTITION $\leq_p$ BALANCED-BIN-PACKING}
+\footnotesize
+
+\textbf{Construcción} (Garey \& Johnson, 1979):
+
+Dada instancia de 3-PARTITION con $\{a_1, \ldots, a_{3m}\}$ y objetivo $B$:
+
+\begin{itemize}
+    \item \textbf{Ítems:} Para cada $a_i$ crear ítem con peso $w_i = a_i$ y valor $v_i = a_i$
+    \item \textbf{Bins:} $k = m$ contenedores, cada uno con capacidad $C_j = B$
+    \item \textbf{Umbral:} $\beta = 0$ (balance perfecto)
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Correctitud ($\Rightarrow$):} Si existe 3-partición válida $\{A_1, \ldots, A_m\}$:
+\begin{itemize}
+    \item Cada $A_j$ tiene 3 elementos que suman $B$ $\Rightarrow$ bin $j$ tiene valor $B$
+    \item Diferencia: $\max_j V_j - \min_j V_j = B - B = 0 \leq \beta$ \checkmark
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Correctitud ($\Leftarrow$):} Si existe asignación con diferencia $\leq 0$:
+\begin{itemize}
+    \item Todos los bins tienen valor $B$ (pues suma total $= mB$ y hay $m$ bins)
+    \item Restricciones $\frac{B}{4} < a_i < \frac{B}{2}$ $\Rightarrow$ exactamente 3 elementos por bin
+    \item Esto constituye una 3-partición válida \checkmark
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Implicaciones de la NP-Completitud}
+
+\textbf{Corolario 1: NP-Hardness del problema de optimización}
+
+\begin{quote}
+El problema BALANCED-BIN-PACKING-OPT es \textbf{NP-hard}.
+\end{quote}
+
+\textit{Razón:} Un algoritmo polinomial para optimización resolvería el problema de decisión comparando con $B$, implicando P = NP.
 
 \vspace{0.5cm}
-No existe algoritmo polinomial conocido (asumiendo P $\neq$ NP)
+\textbf{Corolario 2: Capacidades heterogéneas}
+
+\begin{quote}
+El problema con capacidades \textbf{diferentes} $C_1, \ldots, C_k$ es al menos tan difícil como el caso uniforme.
+\end{quote}
+
+\textit{Razón:} El caso uniforme es instancia particular del heterogéneo.
 
 \vspace{0.5cm}
-Se requiere trade-off: \highlight{optimalidad vs velocidad}
+\textbf{Consecuencias prácticas:}
+\begin{itemize}
+    \item No existe algoritmo polinomial exacto (asumiendo P $\neq$ NP)
+    \item Se requiere \highlight{trade-off: optimalidad vs velocidad}
+    \item Métodos aproximados y heurísticas son necesarios
+\end{itemize}
 
 \end{frame}
 
